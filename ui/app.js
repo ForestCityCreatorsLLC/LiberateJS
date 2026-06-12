@@ -1,4 +1,4 @@
-// Base44 Converter App logic - Connected to Node.js Local Bridge Server
+// LiberateJS App logic - Connected to Node.js Local Bridge Server
 document.addEventListener('DOMContentLoaded', () => {
   // Elements
   const b44UsernameInput = document.getElementById('b44-username');

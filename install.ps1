@@ -1,15 +1,15 @@
-# Base44 Standalone Converter Extension Installer
+# LiberateJS Extension Installer
 # This script sets up the global IDE skill configuration and checks for dependencies.
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "  Installing Base44 Standalone Converter..." -ForegroundColor Cyan
+Write-Host "  Installing LiberateJS..." -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host ""
 
 # 1. Setup paths
-$globalConfigDir = "$env:USERPROFILE\.gemini\config\skills\base44-converter"
+$globalConfigDir = "$env:USERPROFILE\.gemini\config\skills\liberatejs"
 $scriptsDir = "$globalConfigDir\scripts"
 $uiDir = "$globalConfigDir\ui"
 
@@ -141,7 +141,7 @@ if ((Test-Path $installedSkillPath) -and (Test-Path $installedScriptPath) -and (
     Write-Host ""
     Write-Host "  Next Steps:" -ForegroundColor Cyan
     Write-Host "  1. Double click run-dashboard.bat to launch the visual interface." -ForegroundColor Cyan
-    Write-Host "  2. Activate in your IDE chat: 'Run base44-converter skill'." -ForegroundColor Cyan
+    Write-Host "  2. Activate in your IDE chat: 'Run liberatejs skill'." -ForegroundColor Cyan
     Write-Host ""
     
     # Prompt to open launcher

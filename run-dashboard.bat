@@ -1,7 +1,7 @@
 @echo off
-title Base44 Standalone Converter Extension Launcher
+title LiberateJS Extension Launcher
 echo =======================================================
-echo   Base44 Standalone Converter Launcher
+echo   LiberateJS Launcher
 echo   Starting local HTTP server on http://localhost:4444 ...
 echo =======================================================
 echo.

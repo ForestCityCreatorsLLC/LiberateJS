@@ -1,6 +1,6 @@
-# Commercial-Grade Upgrades for Base44 Standalone Converter Extension
+# Commercial-Grade Upgrades for LiberateJS Extension
 
-This document outlines 10 production-ready upgrades and features designed to elevate the **Base44 Standalone Converter Extension** from a migration utility to an enterprise-grade, commercial-ready developer tool.
+This document outlines 10 production-ready upgrades and features designed to elevate the **LiberateJS Extension** from a migration utility to an enterprise-grade, commercial-ready developer tool.
 
 ---
 

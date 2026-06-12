@@ -999,5 +999,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Base44 Converter Local Server listening on http://localhost:${PORT}`);
+  console.log(`LiberateJS Local Server listening on http://localhost:${PORT}`);
 });

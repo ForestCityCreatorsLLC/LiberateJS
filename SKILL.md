@@ -1,5 +1,5 @@
 ---
-name: base44-converter
+name: liberatejs
 description: Cleanses and migrates a proprietary Base44 web app into a clean, standalone React/Node app, registers Git, and pushes it to GitHub.
 ---
 
@@ -17,7 +17,7 @@ The user must set up the following environment variables (either in their global
 ## Extension Dashboard UI
 
 This skill is packaged with a premium, glassmorphic interactive dashboard UI:
-- **Location**: [index.html](file:///C:/Users/igxxg/.gemini/config/skills/base44-converter/ui/index.html)
+- **Location**: [index.html](file:///C:/Users/igxxg/.gemini/config/skills/liberatejs/ui/index.html)
 - **Features**:
   1. Storing and verifying Base44 credentials and GitHub PATs.
   2. Scraping and selecting the target project from Base44.
@@ -42,7 +42,7 @@ When this skill is activated, you must act as the **Orchestrator** and delegate 
 2. **Execute Cleanser**:
    - Run the automated Python cleanser script on the active workspace:
      ```powershell
-     python "C:\Users\igxxg\.gemini\config\skills\base44-converter\scripts\base44-cleanse.py" --dir .
+     python "C:\Users\igxxg\.gemini\config\skills\liberatejs\scripts\base44-cleanse.py" --dir .
      ```
    - Verify that the script successfully deletes the `base44` directory, removes proprietary dependencies and scripts from `package.json`, renames the project, updates `index.html`, generates `.env.example`, and creates `.migration-status.json`.
 3. **Install Dependencies**:
