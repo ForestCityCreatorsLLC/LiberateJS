@@ -22,7 +22,7 @@
     </header>
 
     <main class="glass-card">
-      <!-- Section 0: Legal Terms and Consent -->
+      <!-- Section 0: Legal Terms and Consent (Landing View) -->
       <section class="config-section" id="disclaimer-section">
         <div class="section-header">
           <span class="step-num">⚖️</span>
@@ -39,11 +39,14 @@
             <input type="checkbox" id="chk-accept-disclaimer">
             <label for="chk-accept-disclaimer">I represent that I have legal ownership/access rights and accept the full risk of account termination under the source platform's Terms of Service.</label>
           </div>
+          <button class="btn btn-primary btn-glowing" id="btn-agree-continue" disabled style="margin-top: 1rem; align-self: flex-start;">Agree & Enter Dashboard</button>
         </div>
       </section>
 
-      <!-- Section 1: Credentials Setup -->
-      <section class="config-section disabled" id="setup-section">
+      <!-- App Workspace (Hidden by default, shown after disclaimer agreement) -->
+      <div id="app-workspace" class="hidden" style="display: flex; flex-direction: column; gap: 2.5rem;">
+        <!-- Section 1: Credentials Setup -->
+        <section class="config-section" id="setup-section">
         <div class="section-header">
           <span class="step-num">1</span>
           <h2>Authentication & Credentials</h2>
@@ -207,6 +210,7 @@
           </div>
         </div>
       </section>
+      </div> <!-- End #app-workspace -->
     </main>
 
     <footer class="app-footer">

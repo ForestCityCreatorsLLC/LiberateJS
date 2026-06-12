@@ -885,3 +885,7 @@ input:focus, select:focus {
   user-select: none;
 }
 
+.hidden {
+  display: none !important;
+}
+

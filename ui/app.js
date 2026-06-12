@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const chkAcceptDisclaimer = document.getElementById('chk-accept-disclaimer');
   const setupSection = document.getElementById('setup-section');
+  const btnAgreeContinue = document.getElementById('btn-agree-continue');
+  const appWorkspace = document.getElementById('app-workspace');
+  const disclaimerSection = document.getElementById('disclaimer-section');
 
   const ghTokenInput = document.getElementById('gh-token');
   const gitNameInput = document.getElementById('git-name');
@@ -52,19 +55,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Legal Disclaimer Checkbox listener
   chkAcceptDisclaimer.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      setupSection.classList.remove('disabled');
-      if (isB44Verified) {
-        projectSection.classList.remove('disabled');
-        projectSelect.disabled = false;
-        btnRefreshProjects.disabled = false;
-        fetchProjects();
-      }
-    } else {
-      setupSection.classList.add('disabled');
-      projectSection.classList.add('disabled');
-      projectSelect.disabled = true;
-      btnRefreshProjects.disabled = true;
+    btnAgreeContinue.disabled = !e.target.checked;
+  });
+
+  // Agree & Enter Dashboard listener
+  btnAgreeContinue.addEventListener('click', () => {
+    disclaimerSection.classList.add('hidden');
+    appWorkspace.classList.remove('hidden');
+    
+    // Once entered, if they had saved config, initialize the project fetch
+    if (isB44Verified) {
+      projectSection.classList.remove('disabled');
+      projectSelect.disabled = false;
+      btnRefreshProjects.disabled = false;
+      fetchProjects();
     }
   });
 
@@ -178,7 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset and lock controls back to legal verification stage
     chkAcceptDisclaimer.checked = false;
-    setupSection.classList.add('disabled');
+    btnAgreeContinue.disabled = true;
+    disclaimerSection.classList.remove('hidden');
+    appWorkspace.classList.add('hidden');
+    
     projectSelect.disabled = true;
     btnRefreshProjects.disabled = true;
     b44UsernameInput.disabled = false;
@@ -214,12 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedEmail && savedPwd) {
       isB44Verified = true;
       showStatus(b44AuthStatus, 'Loaded verified email: ' + savedEmail, 'success');
-      if (chkAcceptDisclaimer.checked) {
-        projectSection.classList.remove('disabled');
-        projectSelect.disabled = false;
-        btnRefreshProjects.disabled = false;
-        fetchProjects();
-      }
     }
     if (savedToken) {
       isGHVerified = true;
