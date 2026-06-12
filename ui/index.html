@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base44 Standalone Converter Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="mesh-background"></div>
+  
+  <div class="dashboard-container">
+    <header class="app-header">
+      <div class="logo-area">
+        <span class="icon-cube">⚡</span>
+        <h1>Base44 Standalone Converter</h1>
+      </div>
+      <p class="subtitle">Convert and push Base44 applications to standalone GitHub repositories instantly.</p>
+    </header>
+
+    <main class="glass-card">
+      <!-- Section 1: Credentials Setup -->
+      <section class="config-section" id="setup-section">
+        <div class="section-header">
+          <span class="step-num">1</span>
+          <h2>Authentication & Credentials</h2>
+        </div>
+        
+        <div class="forms-grid">
+          <!-- Base44 Credentials Form -->
+          <div class="auth-card">
+            <h3>Base44 Login</h3>
+            <div class="input-group">
+              <label for="b44-username">Username / Email</label>
+              <input type="email" id="b44-username" placeholder="user@base44.io" autocomplete="off">
+            </div>
+            <div class="input-group">
+              <label for="b44-password">Password</label>
+              <input type="password" id="b44-password" placeholder="••••••••" autocomplete="off">
+            </div>
+            <button class="btn btn-secondary" id="btn-save-b44">Save & Verify Base44</button>
+            <div class="status-msg" id="b44-auth-status">Not connected</div>
+          </div>
+
+          <!-- GitHub Credentials Form -->
+          <div class="auth-card">
+            <h3>GitHub Authentication</h3>
+            <div class="input-group">
+              <label for="gh-token">Personal Access Token (PAT) / OAuth</label>
+              <input type="password" id="gh-token" placeholder="ghp_••••••••••••••••••••" autocomplete="off">
+            </div>
+            <div class="input-group-row">
+              <div class="input-group">
+                <label for="git-name">Git User Name</label>
+                <input type="text" id="git-name" placeholder="John Doe">
+              </div>
+              <div class="input-group">
+                <label for="git-email">Git User Email</label>
+                <input type="email" id="git-email" placeholder="john@example.com">
+              </div>
+            </div>
+            <button class="btn btn-secondary" id="btn-save-gh">Save & Verify GitHub</button>
+            <div class="status-msg" id="gh-auth-status">Not connected</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Project Selection -->
+      <section class="config-section disabled" id="project-section">
+        <div class="section-header">
+          <span class="step-num">2</span>
+          <h2>Select Base44 Project</h2>
+        </div>
+        
+        <div class="selection-container">
+          <div class="input-group">
+            <label for="project-select">Available Projects</label>
+            <div class="select-wrapper">
+              <select id="project-select" disabled>
+                <option value="" disabled selected>Connect to Base44 to load projects...</option>
+              </select>
+              <button class="btn btn-icon" id="btn-refresh-projects" disabled>🔄</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Conversion Control & Real-time Console -->
+      <section class="config-section disabled" id="convert-section">
+        <div class="section-header">
+          <span class="step-num">3</span>
+          <h2>Run Conversion Pipeline</h2>
+        </div>
+
+        <div class="action-container">
+          <button class="btn btn-primary btn-glowing" id="btn-start-convert" disabled>Start Conversion</button>
+        </div>
+
+        <div class="pipeline-progress" id="pipeline-progress">
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-bar"></div>
+          </div>
+
+          <div class="steps-list">
+            <div class="step-item" id="step-ingest">
+              <span class="step-icon">⚪</span>
+              <div class="step-details">
+                <h4>1. Ingesting Project Code</h4>
+                <p>Downloading and extracting files from Base44...</p>
+              </div>
+            </div>
+            <div class="step-item" id="step-cleanse">
+              <span class="step-icon">⚪</span>
+              <div class="step-details">
+                <h4>2. Stripping Base44 Metadata</h4>
+                <p>Deleting proprietary scripts, configs, and npm dependencies...</p>
+              </div>
+            </div>
+            <div class="step-item" id="step-rework">
+              <span class="step-icon">⚪</span>
+              <div class="step-details">
+                <h4>3. Reworking Code & Style Adapter</h4>
+                <p>Fixing layout wrappers, environment vars, and styling...</p>
+              </div>
+            </div>
+            <div class="step-item" id="step-qa">
+              <span class="step-icon">⚪</span>
+              <div class="step-details">
+                <h4>4. QA Build & CI/CD Setup</h4>
+                <p>Verifying build passes and writing GitHub Actions workflow...</p>
+              </div>
+            </div>
+            <div class="step-item" id="step-deploy">
+              <span class="step-icon">⚪</span>
+              <div class="step-details">
+                <h4>5. Git Init & GitHub Push</h4>
+                <p>Initializing git repo and pushing to remote branch...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console log output -->
+          <div class="console-box" id="console-output">
+            <div class="console-line system">[SYSTEM] Ready to start conversion pipeline.</div>
+          </div>
+
+          <!-- Completion card -->
+          <div class="success-card hidden" id="success-card">
+            <div class="success-icon">🎉</div>
+            <h3>Conversion Successful!</h3>
+            <p>Your application is now a standalone project completely decoupled from Base44 and hosted on GitHub.</p>
+            <div class="links-group">
+              <a href="#" target="_blank" class="btn btn-secondary" id="link-repo">Open GitHub Repository</a>
+              <button class="btn btn-secondary" id="btn-reset">Convert Another Project</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Real-time Code Diff -->
+      <section class="config-section disabled" id="diff-section">
+        <div class="section-header">
+          <span class="step-num">4</span>
+          <h2>Real-time Code Diff Viewer</h2>
+        </div>
+        
+        <div class="diff-container">
+          <div class="diff-sidebar" id="diff-files-list">
+            <div class="diff-no-files">No files modified yet. Run conversion pipeline to view diffs.</div>
+          </div>
+          <div class="diff-view-panel">
+            <div class="diff-view-header">
+              <span class="diff-file-title" id="diff-current-file">Select a file to view diff</span>
+              <span class="diff-file-status" id="diff-current-status"></span>
+            </div>
+            <div class="diff-split-container">
+              <div class="diff-pane original" id="diff-pane-original">
+                <div class="diff-empty-state">No file selected</div>
+              </div>
+              <div class="diff-pane modified" id="diff-pane-modified">
+                <div class="diff-empty-state">No file selected</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>Base44 Converter Extension &copy; 2026. Built for Anti-Gravity IDE.</p>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

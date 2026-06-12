@@ -1,0 +1,7 @@
+{
+  "packageManager": "npm",
+  "routes": {
+    "/old-view": "/new-view",
+    "#dashboard": "#modern-dashboard"
+  }
+}
