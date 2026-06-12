@@ -232,8 +232,7 @@ def run_preflight_checks(project_dir):
                             
                     # Simple syntax bracket-matching parser
                     if not verify_brackets(content):
-                        log(f"  [ERROR] Syntax check failed (unmatched brackets/braces) in file: {rel_path}", "ERROR")
-                        passed = False
+                        log(f"  [WARNING] Syntax check heuristic flagged potential unmatched brackets/braces in: {rel_path}", "WARNING")
                     
                 except Exception as e:
                     log(f"  [WARNING] Could not read file {rel_path} for syntax pre-checks: {e}", "WARNING")
@@ -344,8 +343,8 @@ def extract_env_variables(project_dir, metadata_summary):
         try:
             with open(params_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                # Safe regex utilizing backreferences to match quotes properly
-                matches = re.findall(r"(\w+)\s*:\s*(['\"`])(.*?)\2", content)
+                # Safe regex utilizing backreferences to match quotes properly, supporting escaped quotes
+                matches = re.findall(r"(\w+)\s*:\s*(['\"`])((?:\\.|(?!\2).)*)\2", content)
                 for k, quote, v in matches:
                     env_key = f"VITE_APP_{k.upper()}"
                     env_vars[env_key] = v

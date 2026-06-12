@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSaveB44 = document.getElementById('btn-save-b44');
   const b44AuthStatus = document.getElementById('b44-auth-status');
 
+  const chkAcceptDisclaimer = document.getElementById('chk-accept-disclaimer');
+  const setupSection = document.getElementById('setup-section');
+
   const ghTokenInput = document.getElementById('gh-token');
   const gitNameInput = document.getElementById('git-name');
   const gitEmailInput = document.getElementById('git-email');
@@ -46,6 +49,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load saved configuration from localStorage
   loadSavedConfig();
+
+  // Legal Disclaimer Checkbox listener
+  chkAcceptDisclaimer.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      setupSection.classList.remove('disabled');
+      if (isB44Verified) {
+        projectSection.classList.remove('disabled');
+        projectSelect.disabled = false;
+        btnRefreshProjects.disabled = false;
+        fetchProjects();
+      }
+    } else {
+      setupSection.classList.add('disabled');
+      projectSection.classList.add('disabled');
+      projectSelect.disabled = true;
+      btnRefreshProjects.disabled = true;
+    }
+  });
 
   // Step 1: Save & Verify Base44
   btnSaveB44.addEventListener('click', () => {
@@ -155,9 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
     diffPaneOriginal.innerHTML = '<div class="diff-empty-state">No file selected</div>';
     diffPaneModified.innerHTML = '<div class="diff-empty-state">No file selected</div>';
 
-    // Unlock controls
-    projectSelect.disabled = false;
-    btnRefreshProjects.disabled = false;
+    // Reset and lock controls back to legal verification stage
+    chkAcceptDisclaimer.checked = false;
+    setupSection.classList.add('disabled');
+    projectSelect.disabled = true;
+    btnRefreshProjects.disabled = true;
     b44UsernameInput.disabled = false;
     b44PasswordInput.disabled = false;
     ghTokenInput.disabled = false;
@@ -191,10 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedEmail && savedPwd) {
       isB44Verified = true;
       showStatus(b44AuthStatus, 'Loaded verified email: ' + savedEmail, 'success');
-      projectSection.classList.remove('disabled');
-      projectSelect.disabled = false;
-      btnRefreshProjects.disabled = false;
-      fetchProjects();
+      if (chkAcceptDisclaimer.checked) {
+        projectSection.classList.remove('disabled');
+        projectSelect.disabled = false;
+        btnRefreshProjects.disabled = false;
+        fetchProjects();
+      }
     }
     if (savedToken) {
       isGHVerified = true;

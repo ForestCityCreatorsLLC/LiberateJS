@@ -22,8 +22,28 @@
     </header>
 
     <main class="glass-card">
+      <!-- Section 0: Legal Terms and Consent -->
+      <section class="config-section" id="disclaimer-section">
+        <div class="section-header">
+          <span class="step-num">⚖️</span>
+          <h2>Legal Risk & Compliance Agreement</h2>
+        </div>
+        <div class="disclaimer-box">
+          <p>This utility operates entirely locally on your machine. You will log into the Base44 platform using your own authorized credentials to retrieve your own codebase. Before using this tool, you must acknowledge that:</p>
+          <ul>
+            <li>You own the legal rights or have a license for the codebase being migrated.</li>
+            <li>No proprietary Base44 libraries or closed-source runtime engines are copied or redistributed.</li>
+            <li>Using this tool may violate the Terms of Service (ToS) of the source platform, and you assume all risks (including potential account termination).</li>
+          </ul>
+          <div class="checkbox-group">
+            <input type="checkbox" id="chk-accept-disclaimer">
+            <label for="chk-accept-disclaimer">I represent that I have legal ownership/access rights and accept the full risk of account termination under the source platform's Terms of Service.</label>
+          </div>
+        </div>
+      </section>
+
       <!-- Section 1: Credentials Setup -->
-      <section class="config-section" id="setup-section">
+      <section class="config-section disabled" id="setup-section">
         <div class="section-header">
           <span class="step-num">1</span>
           <h2>Authentication & Credentials</h2>

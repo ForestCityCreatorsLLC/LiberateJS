@@ -6,6 +6,27 @@ const https = require('https');
 
 const PORT = 4444;
 
+function updateGitignore(targetDir) {
+  const gitignorePath = path.join(targetDir, '.gitignore');
+  const defaults = ['node_modules/', 'dist/', 'build/', '.env', '.env.local'];
+  let currentContent = '';
+  if (fs.existsSync(gitignorePath)) {
+    try {
+      currentContent = fs.readFileSync(gitignorePath, 'utf8');
+    } catch (e) {}
+  }
+  
+  const currentLines = currentContent.split('\n').map(l => l.trim()).filter(Boolean);
+  const missing = defaults.filter(d => !currentLines.includes(d));
+  
+  if (missing.length > 0) {
+    const suffix = (currentContent && !currentContent.endsWith('\n') ? '\n' : '') + missing.join('\n') + '\n';
+    try {
+      fs.appendFileSync(gitignorePath, suffix, 'utf8');
+    } catch (e) {}
+  }
+}
+
 // Cache configuration to pass Git user details to local init phase
 let cachedConfig = {};
 let activeOriginalBranch = 'main';
@@ -132,7 +153,7 @@ function rollbackMigration(targetDir, originalBranch, sendLog) {
   sendLog('[ROLLBACK] Initiating hard rollback to prevent workspace/file corruption...', 'warning');
   try {
     execSync('git reset --hard', { cwd: targetDir });
-    execSync(`git checkout ${originalBranch}`, { cwd: targetDir });
+    execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
     sendLog(`[ROLLBACK] Reverted workspace files and switched back to branch: ${originalBranch}`, 'success');
   } catch (err) {
     sendLog(`[ERROR] Rollback failed: ${err.message}`, 'error');
@@ -328,7 +349,8 @@ const server = http.createServer((req, res) => {
     if (version === 'original') {
       try {
         const { execFileSync } = require('child_process');
-        const content = execFileSync('git', ['show', `HEAD:${filePath}`], { cwd: targetDir, encoding: 'utf8' });
+        const gitPath = filePath.replace(/\\/g, '/');
+        const content = execFileSync('git', ['show', `HEAD:${gitPath}`], { cwd: targetDir, encoding: 'utf8' });
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end(content);
       } catch (e) {
@@ -520,9 +542,11 @@ const server = http.createServer((req, res) => {
         scriptPath = path.join(__dirname, '..', 'base44-cleanse.py');
       }
       
+      let cleanseHandled = false;
       try {
         cleanseProc = spawn('python', [scriptPath, '--dir', targetDir, '--rename', repoName]);
       } catch (err) {
+        cleanseHandled = true;
         sendLog(`[ERROR] Failed to spawn Python process: ${err.message}. Ensure Python is installed and in your PATH.`, 'error');
         if (gitInitialized) {
           rollbackMigration(targetDir, originalBranch, sendLog);
@@ -551,6 +575,8 @@ const server = http.createServer((req, res) => {
       });
 
       cleanseProc.on('error', (err) => {
+        if (cleanseHandled) return;
+        cleanseHandled = true;
         sendLog(`[ERROR] Cleansing process execution error: ${err.message}`, 'error');
         if (gitInitialized) {
           rollbackMigration(targetDir, originalBranch, sendLog);
@@ -562,6 +588,8 @@ const server = http.createServer((req, res) => {
       });
 
       cleanseProc.on('close', (code) => {
+        if (cleanseHandled) return;
+        cleanseHandled = true;
         if (code !== 0) {
           sendLog(`Cleansing script failed with exit code ${code}`, 'error');
           if (gitInitialized) {
@@ -650,9 +678,11 @@ const server = http.createServer((req, res) => {
             const pmCmd = process.platform === 'win32' ? `${packageManager}.cmd` : packageManager;
             sendLog(`Verifying compilation: ${pmCmd} run build...`, 'info');
             
+            let buildHandled = false;
             try {
               buildProc = spawn(pmCmd, ['run', 'build'], { shell: true, cwd: targetDir });
             } catch (err) {
+              buildHandled = true;
               sendLog(`[ERROR] Failed to spawn build process: ${err.message}`, 'error');
               if (gitInitialized) {
                 rollbackMigration(targetDir, originalBranch, sendLog);
@@ -683,6 +713,8 @@ const server = http.createServer((req, res) => {
             });
 
             buildProc.on('error', (err) => {
+              if (buildHandled) return;
+              buildHandled = true;
               sendLog(`[ERROR] Build process execution error: ${err.message}`, 'error');
               if (gitInitialized) {
                 rollbackMigration(targetDir, originalBranch, sendLog);
@@ -694,6 +726,8 @@ const server = http.createServer((req, res) => {
             });
             
             buildProc.on('close', (buildCode) => {
+              if (buildHandled) return;
+              buildHandled = true;
               if (buildCode !== 0) {
                 sendLog(`[ERROR] QA validation build failed with exit code ${buildCode}.`, 'error');
                 if (gitInitialized) {
@@ -782,7 +816,10 @@ const server = http.createServer((req, res) => {
                 runDeploy();
               });
 
+              let deployStarted = false;
               function runDeploy() {
+                if (deployStarted) return;
+                deployStarted = true;
                 sendLog('Created GitHub CI/CD action workflow: build-and-test.yml', 'success');
                 if (!res.writableEnded && !res.finished) {
                   res.write(`data: ${JSON.stringify({ step: 'qa', status: 'success' })}\n\n`);
@@ -832,13 +869,13 @@ const server = http.createServer((req, res) => {
                       if (gitInitialized) {
                         try {
                           sendLog(`Merging temporary branch migration/base44-cleanup back into ${originalBranch}...`, 'info');
-                          execSync(`git checkout ${originalBranch}`, { cwd: targetDir });
+                          execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
                           execSync('git merge migration/base44-cleanup', { cwd: targetDir });
                           sendLog(`Merged migration/base44-cleanup into ${originalBranch} successfully.`, 'success');
                         } catch (mergeErr) {
                           sendLog(`[WARNING] Merge failed: ${mergeErr.message}. Force-resetting ${originalBranch} to migration/base44-cleanup.`, 'warning');
                           try {
-                            execSync(`git checkout ${originalBranch}`, { cwd: targetDir });
+                            execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
                             execSync(`git reset --hard migration/base44-cleanup`, { cwd: targetDir });
                           } catch (e) {
                             sendLog(`[ERROR] Failed to switch/reset original branch: ${e.message}`, 'error');
@@ -864,7 +901,7 @@ const server = http.createServer((req, res) => {
                         sendLog(`[WARNING] Failed to set local Git email: ${e.message}`, 'warning');
                       }
 
-                      fs.writeFileSync(path.join(targetDir, '.gitignore'), 'node_modules/\ndist/\nbuild/\n.env\n.env.local\n');
+                      updateGitignore(targetDir);
                       
                       execSync('git add .', { cwd: targetDir });
                       execSync('git commit --allow-empty -m "feat: initial clean standalone application"', { cwd: targetDir });
@@ -898,6 +935,14 @@ const server = http.createServer((req, res) => {
                         res.end();
                       }
                     } catch (gitErr) {
+                      // SECURE KEY LEAK MITIGATION: Ensure remote URL is sanitized even on push failure
+                      try {
+                        execSync(`git remote set-url origin ${repoUrl}.git`, { cwd: targetDir });
+                      } catch (e) {
+                        try {
+                          execSync('git remote remove origin', { cwd: targetDir });
+                        } catch (e2) {}
+                      }
                       // Sanitize error message in case it contains token
                       let errMsg = gitErr.message;
                       if (token) {
@@ -927,13 +972,13 @@ const server = http.createServer((req, res) => {
                   if (gitInitialized) {
                     try {
                       sendLog(`Merging temporary branch migration/base44-cleanup back into ${originalBranch}...`, 'info');
-                      execSync(`git checkout ${originalBranch}`, { cwd: targetDir });
+                      execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
                       execSync('git merge migration/base44-cleanup', { cwd: targetDir });
                       sendLog(`Merged migration/base44-cleanup into ${originalBranch} successfully.`, 'success');
                     } catch (mergeErr) {
                       sendLog(`[WARNING] Merge failed: ${mergeErr.message}. Force-resetting ${originalBranch} to migration/base44-cleanup.`, 'warning');
                       try {
-                        execSync(`git checkout ${originalBranch}`, { cwd: targetDir });
+                        execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
                         execSync(`git reset --hard migration/base44-cleanup`, { cwd: targetDir });
                       } catch (e) {
                         sendLog(`[ERROR] Failed to switch/reset original branch: ${e.message}`, 'error');
@@ -958,7 +1003,7 @@ const server = http.createServer((req, res) => {
                     }
                   }
 
-                  fs.writeFileSync(path.join(targetDir, '.gitignore'), 'node_modules/\ndist/\nbuild/\n.env\n.env.local\n');
+                  updateGitignore(targetDir);
                   execSync('git add .', { cwd: targetDir });
                   execSync('git commit --allow-empty -m "feat: initial clean standalone application"', { cwd: targetDir });
                   execSync('git branch -M main', { cwd: targetDir });
