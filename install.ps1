@@ -16,13 +16,11 @@ $recipesDir = "$globalConfigDir\recipes"
 
 $sourceDir = Get-Item .
 $sourceSkillFile = Join-Path $sourceDir "SKILL.md"
-$sourceScript = Join-Path $sourceDir "scripts\decouple-cleanse.js"
 $sourceLauncher = Join-Path $sourceDir "run-dashboard.bat"
 $sourceUiIndex = Join-Path $sourceDir "ui\index.html"
 $sourceUiStyle = Join-Path $sourceDir "ui\styles.css"
 $sourceUiApp = Join-Path $sourceDir "ui\app.js"
 $sourceUiServer = Join-Path $sourceDir "ui\server.js"
-$sourceAstRewriter = Join-Path $sourceDir "scripts\ast-rewriter.js"
 $sourceRecipes = Join-Path $sourceDir "recipes"
 
 # 2. Dependency Checks
@@ -91,22 +89,10 @@ if (Test-Path $sourceSkillFile) {
     Write-Host "  [i] SKILL.md is already global. Skipping copy." -ForegroundColor DarkGray
 }
 
-# Copy Cleansing script
-if (Test-Path $sourceScript) {
-    Copy-Item -Path $sourceScript -Destination (Join-Path $scriptsDir "decouple-cleanse.js") -Force
-    Write-Host "  [OK] Copied cleanser script to global scripts directory." -ForegroundColor Green
-}
-
 # Copy Recipes
 if (Test-Path $sourceRecipes) {
     Copy-Item -Path "$sourceRecipes\*" -Destination $recipesDir -Recurse -Force
     Write-Host "  [OK] Copied decoupling recipes to global recipes directory." -ForegroundColor Green
-}
-
-# Copy AST Rewriter script
-if (Test-Path $sourceAstRewriter) {
-    Copy-Item -Path $sourceAstRewriter -Destination (Join-Path $scriptsDir "ast-rewriter.js") -Force
-    Write-Host "  [OK] Copied AST rewriter script to global scripts directory." -ForegroundColor Green
 }
 
 # Copy Dashboard Launcher
@@ -123,17 +109,54 @@ if (Test-Path $sourceUiIndex) {
     Copy-Item -Path $sourceUiServer -Destination $uiDir -Force
     Write-Host "  [OK] Copied Dashboard UI components and Node.js server server.js." -ForegroundColor Green
 }
+
+# Copy compiled TypeScript dist/ directory
+$sourceDist = Join-Path $sourceDir "dist"
+if (Test-Path $sourceDist) {
+    Copy-Item -Path $sourceDist -Destination $globalConfigDir -Recurse -Force
+    Write-Host "  [OK] Copied compiled TypeScript engine (dist/) to global directory." -ForegroundColor Green
+}
+
+# Copy executable bin/ directory
+$sourceBin = Join-Path $sourceDir "bin"
+if (Test-Path $sourceBin) {
+    Copy-Item -Path $sourceBin -Destination $globalConfigDir -Recurse -Force
+    Write-Host "  [OK] Copied executable wrapper (bin/) to global directory." -ForegroundColor Green
+}
+
+# Copy recipes/ directory to global
+if (Test-Path $sourceRecipes) {
+    # Ensure recipes directory exists in global config dir
+    $targetGlobalRecipes = Join-Path $globalConfigDir "recipes"
+    if (-not (Test-Path $targetGlobalRecipes)) {
+        New-Item -ItemType Directory -Path $targetGlobalRecipes | Out-Null
+    }
+    Copy-Item -Path "$sourceRecipes\*" -Destination $targetGlobalRecipes -Recurse -Force
+    Write-Host "  [OK] Copied recipes folder to global directory." -ForegroundColor Green
+}
+
+# Copy package.json to global root so dependencies can be resolved
+$sourcePkgJson = Join-Path $sourceDir "package.json"
+if (Test-Path $sourcePkgJson) {
+    Copy-Item -Path $sourcePkgJson -Destination $globalConfigDir -Force
+    Write-Host "  [OK] Copied package.json to global directory." -ForegroundColor Green
+}
+
+# Install npm dependencies in global directory so compiled CLI runs properly
+Write-Host "  Running npm install in global directory to download dependencies..."
+Start-Process -FilePath "npm" -ArgumentList "install --production" -WorkingDirectory $globalConfigDir -NoNewWindow -Wait
+
 Write-Host ""
 
 # 5. Diagnostic Validation
 Write-Host "[4/4] Running installation diagnostics..." -ForegroundColor Yellow
 $installedSkillPath = Join-Path $globalConfigDir "SKILL.md"
-$installedScriptPath = Join-Path $scriptsDir "decouple-cleanse.js"
-$installedAstRewriterPath = Join-Path $scriptsDir "ast-rewriter.js"
 $installedUiIndex = Join-Path $uiDir "index.html"
 $installedLauncher = Join-Path $globalConfigDir "run-dashboard.bat"
+$installedCliJs = Join-Path $globalConfigDir "dist\cli.js"
+$installedBinJs = Join-Path $globalConfigDir "bin\liberate.js"
 
-if ((Test-Path $installedSkillPath) -and (Test-Path $installedScriptPath) -and (Test-Path $installedAstRewriterPath) -and (Test-Path $installedUiIndex) -and (Test-Path $installedLauncher)) {
+if ((Test-Path $installedSkillPath) -and (Test-Path $installedUiIndex) -and (Test-Path $installedLauncher) -and (Test-Path $installedCliJs) -and (Test-Path $installedBinJs)) {
     Write-Host ""
     Write-Host "=============================================" -ForegroundColor Green
     Write-Host "  INSTALLATION COMPLETED SUCCESSFULLY!" -ForegroundColor Green

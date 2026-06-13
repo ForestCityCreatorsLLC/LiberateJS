@@ -60,7 +60,7 @@ function getGitHubUser(token, callback) {
     method: 'GET',
     headers: {
       'Authorization': `token ${token}`,
-      'User-Agent': 'Base44-Converter-Agent',
+      'User-Agent': 'LiberateJS-Converter-Agent',
       'Accept': 'application/vnd.github.v3+json'
     }
   };
@@ -104,7 +104,7 @@ function createGitHubRepo(token, repoName, callback) {
     method: 'POST',
     headers: {
       'Authorization': `token ${token}`,
-      'User-Agent': 'Base44-Converter-Agent',
+      'User-Agent': 'LiberateJS-Converter-Agent',
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
       'Content-Length': Buffer.byteLength(data)
@@ -161,7 +161,7 @@ function rollbackMigration(targetDir, originalBranch, sendLog) {
 }
 
 function applyFrameworkRoutes(targetDir, routes, sendLog) {
-  sendLog('Applying custom framework routes from base44-migrate.config.json...', 'info');
+  sendLog('Applying custom framework routes from liberatejs.config.json...', 'info');
   const excludeDirs = new Set([".git", "node_modules", "dist", "build", ".next", ".cache"]);
   
   function walkDir(dir) {
@@ -173,7 +173,7 @@ function applyFrameworkRoutes(targetDir, routes, sendLog) {
       if (stat.isDirectory()) {
         walkDir(filePath);
       } else if (stat.isFile() && /\.(js|jsx|ts|tsx|html|css|json)$/.test(file)) {
-        if (file === 'base44-migrate.config.json' || file === 'package.json' || file === 'package-lock.json') continue;
+        if (file === 'liberatejs.config.json' || file === 'package.json' || file === 'package-lock.json') continue;
         try {
           let content = fs.readFileSync(filePath, 'utf8');
           let modified = false;
@@ -276,7 +276,7 @@ const server = http.createServer((req, res) => {
         cachedConfig = config;
         
         // Write credentials directly to a local .env file in the active target workspace
-        const envContent = `BASE44_EMAIL="${config.b44Email || ''}"\nBASE44_PASSWORD="${config.b44Password || ''}"\nGH_TOKEN="${config.ghToken || ''}"\n`;
+        const envContent = `SOURCE_EMAIL="${config.sourceEmail || config.b44Email || ''}"\nSOURCE_PASSWORD="${config.sourcePassword || config.b44Password || ''}"\nGH_TOKEN="${config.ghToken || ''}"\n`;
         const workspacePath = process.cwd();
         fs.writeFileSync(path.join(workspacePath, '.env'), envContent);
 
@@ -402,16 +402,16 @@ const server = http.createServer((req, res) => {
     sendLog('Starting conversion pipeline via local bridge...', 'system');
     const targetDir = process.cwd();
 
-    // Parse target configuration profile parsing: read base44-migrate.config.json if present
+    // Parse target configuration profile parsing: read liberatejs.config.json if present
     let packageManager = 'npm';
     let frameworkRoutes = null;
 
-    const configPath = path.join(targetDir, 'base44-migrate.config.json');
+    const configPath = path.join(targetDir, 'liberatejs.config.json');
     if (fs.existsSync(configPath)) {
       try {
         const configContent = fs.readFileSync(configPath, 'utf8');
         const config = JSON.parse(configContent);
-        sendLog('Found target configuration profile (base44-migrate.config.json). Parsing...', 'info');
+        sendLog('Found target configuration profile (liberatejs.config.json). Parsing...', 'info');
 
         if (config.packageManager) {
           const pm = config.packageManager.toLowerCase();
@@ -428,7 +428,7 @@ const server = http.createServer((req, res) => {
           sendLog(`Parsed framework routes from profile: ${JSON.stringify(frameworkRoutes)}`, 'success');
         }
       } catch (err) {
-        sendLog(`[WARNING] Failed to parse base44-migrate.config.json: ${err.message}`, 'warning');
+        sendLog(`[WARNING] Failed to parse liberatejs.config.json: ${err.message}`, 'warning');
       }
     }
 
@@ -460,7 +460,7 @@ const server = http.createServer((req, res) => {
       try {
         execSync('git config user.name', { cwd: targetDir, stdio: 'ignore' });
       } catch (e) {
-        const gitName = cachedConfig.gitName || 'Base44 Migrator';
+        const gitName = cachedConfig.gitName || 'LiberateJS Migrator';
         try {
           execSync(`git config user.name "${gitName}"`, { cwd: targetDir });
           sendLog(`Configured Git username: ${gitName}`, 'info');
@@ -534,15 +534,15 @@ const server = http.createServer((req, res) => {
         res.write(`data: ${JSON.stringify({ step: 'ingest', status: 'success' })}\n\n`);
       }
 
-      // Step 2: Cleanse (Run decouple-cleanse.js)
-      sendLog('Step 2: Executing JavaScript cleansing script decouple-cleanse.js...', 'info');
+      // Step 2: Cleanse (Run compiled TypeScript cleanser CLI)
+      sendLog('Step 2: Executing upscaled TypeScript cleanser engine...', 'info');
       
-      const scriptPath = path.join(__dirname, '..', 'scripts', 'decouple-cleanse.js');
+      const cliPath = path.join(__dirname, '..', 'dist', 'cli.js');
       
       let cleanseHandled = false;
       try {
         const recipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
-        cleanseProc = spawn('node', [scriptPath, '--dir', targetDir, '--rename', repoName, '--recipe', recipePath]);
+        cleanseProc = spawn('node', [cliPath, '--src', targetDir, '--rename', repoName, '--recipe', recipePath, '--stage', 'cleanse']);
       } catch (err) {
         cleanseHandled = true;
         sendLog(`[ERROR] Failed to spawn Node.js process: ${err.message}.`, 'error');
@@ -620,12 +620,12 @@ const server = http.createServer((req, res) => {
         // Step 3: Rework Adapter
         sendLog('Step 3: Rewiring router layouts and state adapters using AST rewriter...', 'info');
         setTimeout(() => {
-          const rewriterPath = path.join(__dirname, '..', 'scripts', 'ast-rewriter.js');
+          const cliPath = path.join(__dirname, '..', 'dist', 'cli.js');
           const recipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
-          sendLog(`Running AST rewriter: node "${rewriterPath}" "${targetDir}" --recipe="${recipePath}"`, 'info');
+          sendLog(`Running AST rewriter: node "${cliPath}" --src "${targetDir}" --recipe "${recipePath}" --stage rewrite`, 'info');
           
           try {
-            const rewriterOutput = execSync(`node "${rewriterPath}" "${targetDir}" --recipe="${recipePath}" --verbose`, { encoding: 'utf8' });
+            const rewriterOutput = execSync(`node "${cliPath}" --src "${targetDir}" --recipe "${recipePath}" --stage rewrite --verbose`, { encoding: 'utf8' });
             const lines = rewriterOutput.split('\n');
             lines.forEach(line => {
               if (line.trim()) {

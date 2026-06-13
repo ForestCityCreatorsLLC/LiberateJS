@@ -1,19 +1,15 @@
-#!/usr/bin/env node
-/**
- * Ultimate Code Decoupler & Cleanser CLI Tool
- * Pure Node.js version of decouple-cleanse.py.
- * Automates pre-flight checking, package cleansing, HTML title updates, environment variable mapping,
- * and global search-and-replace, without requiring Python.
- */
+import * as fs from 'fs';
+import * as path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+// ESM fallback for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Color logger helper
-function log(msg, level = "INFO") {
+function log(msg: string, level: string = "INFO") {
   const isWindows = process.platform === "win32";
-  const colors = {
+  const colors: Record<string, string> = {
     INFO: "\x1b[34m[INFO]\x1b[0m",
     SUCCESS: "\x1b[32m[SUCCESS]\x1b[0m",
     WARNING: "\x1b[33m[WARNING]\x1b[0m",
@@ -27,35 +23,9 @@ function log(msg, level = "INFO") {
   }
 }
 
-// Custom command-line argument parser
-function parseArgs() {
-  const args = process.argv.slice(2);
-  const parsed = {
-    dir: ".",
-    rename: null,
-    dryRun: false,
-    recipe: null
-  };
-
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--dir") {
-      parsed.dir = args[++i];
-    } else if (args[i] === "--rename") {
-      parsed.rename = args[++i];
-    } else if (args[i] === "--dry-run") {
-      parsed.dryRun = true;
-    } else if (args[i] === "--recipe") {
-      parsed.recipe = args[++i];
-    }
-  }
-
-  return parsed;
-}
-
-// Load recipe config
-function loadRecipe(recipePath) {
+function loadRecipe(recipePath: string | null) {
   if (!recipePath) {
-    // Default fallback path relative to this script
+    // Default fallback path relative to compiled dist output location (dist/cleanser.js)
     const defaultPath = path.join(__dirname, "..", "recipes", "base44.json");
     if (fs.existsSync(defaultPath)) {
       recipePath = defaultPath;
@@ -70,18 +40,17 @@ function loadRecipe(recipePath) {
     const recipe = JSON.parse(data);
     log(`Loaded recipe: ${recipe.name || 'unnamed'}`, "SUCCESS");
     return recipe;
-  } catch (err) {
+  } catch (err: any) {
     log(`Failed to load recipe from ${recipePath}: ${err.message}`, "ERROR");
     process.exit(1);
   }
 }
 
-// Pre-flight check: balanced bracket/brace matcher
-function verifyBrackets(code) {
-  const stack = [];
-  const mapping = { ')': '(', '}': '{', ']': '[' };
+function verifyBrackets(code: string): boolean {
+  const stack: string[] = [];
+  const mapping: Record<string, string> = { ')': '(', '}': '{', ']': '[' };
   
-  let inString = null;
+  let inString: string | null = null;
   let escaped = false;
   
   let i = 0;
@@ -145,8 +114,7 @@ function verifyBrackets(code) {
   return stack.length === 0;
 }
 
-// Detect project web framework
-function detectFramework(projectDir) {
+function detectFramework(projectDir: string): string {
   const nextjsIndicators = [
     fs.existsSync(path.join(projectDir, "pages")),
     fs.existsSync(path.join(projectDir, "src", "pages")),
@@ -196,8 +164,7 @@ function detectFramework(projectDir) {
   return "unknown";
 }
 
-// Write default configs
-function writeFrameworkConfig(projectDir, framework, dryRun, metadataSummary) {
+function writeFrameworkConfig(projectDir: string, framework: string, dryRun: boolean, metadataSummary: any) {
   if (framework === "nextjs") {
     const configFiles = ["next.config.js", "next.config.mjs", "next.config.ts"];
     const exists = configFiles.some(f => fs.existsSync(path.join(projectDir, f)));
@@ -211,7 +178,7 @@ function writeFrameworkConfig(projectDir, framework, dryRun, metadataSummary) {
           fs.writeFileSync(dest, content, "utf8");
           log(`Created default Next.js config: ${dest}`, "SUCCESS");
           if (metadataSummary) metadataSummary.modified_files.push("next.config.js");
-        } catch (err) {
+        } catch (err: any) {
           log(`Failed to create Next.js config: ${err.message}`, "ERROR");
         }
       }
@@ -231,7 +198,7 @@ function writeFrameworkConfig(projectDir, framework, dryRun, metadataSummary) {
           fs.writeFileSync(dest, content, "utf8");
           log(`Created default Vite React config: ${dest}`, "SUCCESS");
           if (metadataSummary) metadataSummary.modified_files.push("vite.config.js");
-        } catch (err) {
+        } catch (err: any) {
           log(`Failed to create Vite React config: ${err.message}`, "ERROR");
         }
       }
@@ -241,8 +208,7 @@ function writeFrameworkConfig(projectDir, framework, dryRun, metadataSummary) {
   }
 }
 
-// Run pre-flight check logic
-function runPreflightChecks(projectDir) {
+function runPreflightChecks(projectDir: string) {
   log("Running Active Pre-Flight Codebase Checks...", "INFO");
   let passed = true;
 
@@ -265,7 +231,7 @@ function runPreflightChecks(projectDir) {
     try {
       JSON.parse(fs.readFileSync(pkgPath, "utf8"));
       log("  [OK] package.json syntax is valid JSON.", "SUCCESS");
-    } catch (err) {
+    } catch (err: any) {
       log(`  [ERROR] package.json is malformed JSON: ${err.message}`, "ERROR");
       passed = false;
     }
@@ -282,7 +248,7 @@ function runPreflightChecks(projectDir) {
   log("Scanning JS/JSX codebase files for bracket syntax errors...", "INFO");
   const excludeDirs = new Set([".git", "node_modules", "dist", "build", ".next", ".cache"]);
   
-  function walkAndCheck(dir) {
+  function walkAndCheck(dir: string) {
     const list = fs.readdirSync(dir);
     for (const file of list) {
       const fullPath = path.join(dir, file);
@@ -294,7 +260,6 @@ function runPreflightChecks(projectDir) {
       } else if (file.endsWith(".js") || file.endsWith(".jsx") || file.endsWith(".ts") || file.endsWith(".tsx")) {
         try {
           const content = fs.readFileSync(fullPath, "utf8");
-          // Heuristic check
           if (!verifyBrackets(content)) {
             log(`  [WARNING] Syntax check heuristic flagged potential unmatched brackets/braces in: ${path.relative(projectDir, fullPath)}`, "WARNING");
           }
@@ -305,7 +270,7 @@ function runPreflightChecks(projectDir) {
   
   try {
     walkAndCheck(projectDir);
-  } catch (err) {
+  } catch (err: any) {
     log(`  [WARNING] Error running codebase diagnostics: ${err.message}`, "WARNING");
   }
 
@@ -327,10 +292,9 @@ function runPreflightChecks(projectDir) {
   log("All Pre-Flight codebase diagnostics passed successfully!", "SUCCESS");
 }
 
-// Extract configuration variables to .env.example
-function extractEnvVariables(projectDir, metadataSummary, recipe) {
+function extractEnvVariables(projectDir: string, metadataSummary: any, recipe: any) {
   log("Scanning for configuration keys to map to environment variables...", "INFO");
-  const envVars = {};
+  const envVars: Record<string, string> = {};
   const recipeName = recipe.name || "decouple";
 
   const configPath = path.join(projectDir, recipeName, "config.json");
@@ -341,7 +305,7 @@ function extractEnvVariables(projectDir, metadataSummary, recipe) {
         envVars[`VITE_APP_${k.toUpperCase()}`] = String(v);
       }
       log(`Extracted keys from ${recipeName}/config.json`, "SUCCESS");
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to parse config.json: ${err.message}`, "WARNING");
     }
   }
@@ -350,14 +314,13 @@ function extractEnvVariables(projectDir, metadataSummary, recipe) {
   if (fs.existsSync(paramsPath)) {
     try {
       const content = fs.readFileSync(paramsPath, "utf8");
-      // Match key: "value" or key: 'value' or key: `value`
       const regex = /(\w+)\s*:\s*(['"`])((?:\\.|(?!\2).)*)\2/g;
       let match;
       while ((match = regex.exec(content)) !== null) {
         envVars[`VITE_APP_${match[1].toUpperCase()}`] = match[3];
       }
       log("Extracted keys from src/lib/app-params.js", "SUCCESS");
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to parse app-params.js: ${err.message}`, "WARNING");
     }
   }
@@ -377,7 +340,7 @@ function extractEnvVariables(projectDir, metadataSummary, recipe) {
       }
       fs.writeFileSync(envExamplePath, output, "utf8");
       log(`Generated .env.example at ${envExamplePath}`, "SUCCESS");
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to write .env.example: ${err.message}`, "ERROR");
     }
   } else {
@@ -385,8 +348,7 @@ function extractEnvVariables(projectDir, metadataSummary, recipe) {
   }
 }
 
-// Cleanse package.json dependencies and scripts
-function cleansePackageJson(projectDir, newName, dryRun, metadataSummary, recipe) {
+function cleansePackageJson(projectDir: string, newName: string | null, dryRun: boolean, metadataSummary: any, recipe: any) {
   const pkgPath = path.join(projectDir, "package.json");
   if (!fs.existsSync(pkgPath)) {
     log("No package.json found. Skipping package.json updates.", "WARNING");
@@ -420,7 +382,7 @@ function cleansePackageJson(projectDir, newName, dryRun, metadataSummary, recipe
     for (const field of depFields) {
       if (data[field]) {
         for (const dep of Object.keys(data[field])) {
-          if (removeDeps.some(rd => dep.toLowerCase().includes(rd.toLowerCase()))) {
+          if (removeDeps.some((rd: string) => dep.toLowerCase().includes(rd.toLowerCase()))) {
             metadataSummary.removed_dependencies.push(dep);
             if (dryRun) {
               log(`Would remove ${field} dependency: ${dep}`, "INFO");
@@ -437,10 +399,11 @@ function cleansePackageJson(projectDir, newName, dryRun, metadataSummary, recipe
     const removeScripts = recipe.scripts_to_remove || [recipeName];
     if (data.scripts) {
       for (const [name, cmd] of Object.entries(data.scripts)) {
-        if (removeScripts.some(rs => name.toLowerCase().includes(rs.toLowerCase()) || cmd.toLowerCase().includes(rs.toLowerCase()))) {
+        const cmdStr = String(cmd);
+        if (removeScripts.some((rs: string) => name.toLowerCase().includes(rs.toLowerCase()) || cmdStr.toLowerCase().includes(rs.toLowerCase()))) {
           metadataSummary.removed_scripts.push(name);
           if (dryRun) {
-            log(`Would remove script: ${name} -> ${cmd}`, "INFO");
+            log(`Would remove script: ${name} -> ${cmdStr}`, "INFO");
           } else {
             delete data.scripts[name];
             log(`Removed script: ${name}`, "SUCCESS");
@@ -454,13 +417,12 @@ function cleansePackageJson(projectDir, newName, dryRun, metadataSummary, recipe
       fs.writeFileSync(pkgPath, JSON.stringify(data, null, 2) + "\n", "utf8");
       log("Successfully updated package.json", "SUCCESS");
     }
-  } catch (err) {
+  } catch (err: any) {
     log(`Failed to update package.json: ${err.message}`, "ERROR");
   }
 }
 
-// Cleanse index.html title and tags
-function cleanseHtml(projectDir, dryRun, metadataSummary, recipe) {
+function cleanseHtml(projectDir: string, dryRun: boolean, metadataSummary: any, recipe: any) {
   const htmlPath = path.join(projectDir, "index.html");
   if (!fs.existsSync(htmlPath)) {
     log("No index.html found. Skipping HTML cleansing.", "WARNING");
@@ -521,13 +483,12 @@ function cleanseHtml(projectDir, dryRun, metadataSummary, recipe) {
       metadataSummary.modified_files.push("index.html");
       log("Successfully updated index.html", "SUCCESS");
     }
-  } catch (err) {
+  } catch (err: any) {
     log(`Failed to update index.html: ${err.message}`, "ERROR");
   }
 }
 
-// Global case-preserving search-and-replace
-function deepSearchAndReplace(projectDir, dryRun, metadataSummary, recipe) {
+function deepSearchAndReplace(projectDir: string, dryRun: boolean, metadataSummary: any, recipe: any) {
   const recipeName = recipe.name || "decouple";
   const replaceTerms = recipe.replace_terms || [{ pattern: "base44", replacement: "standalone" }];
   log(`Starting global search-and-replace using recipe: ${recipeName}...`, "INFO");
@@ -535,16 +496,14 @@ function deepSearchAndReplace(projectDir, dryRun, metadataSummary, recipe) {
   const excludeDirs = new Set([".git", "node_modules", "dist", "build", ".next", ".cache", ".idea", ".vscode"]);
   const excludeFiles = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "decouple-cleanse.py", "decouple-cleanse.js", "base44-cleanse.py", ".migration-status.json"]);
 
-  // Set up replacement rules
-  const rules = replaceTerms.map(term => {
+  const rules = replaceTerms.map((term: any) => {
     return {
       regex: new RegExp(term.pattern, "gi"),
       replacement: term.replacement
     };
   });
 
-  // Case-preserving replacement helper
-  function casePreservingReplace(match, replacement) {
+  function casePreservingReplace(match: string, replacement: string) {
     if (match === match.toUpperCase()) return replacement.toUpperCase();
     if (match[0] === match[0].toUpperCase()) return replacement.charAt(0).toUpperCase() + replacement.slice(1).toLowerCase();
     return replacement.toLowerCase();
@@ -553,7 +512,7 @@ function deepSearchAndReplace(projectDir, dryRun, metadataSummary, recipe) {
   let count = 0;
   let fileCount = 0;
 
-  function walkAndReplace(dir) {
+  function walkAndReplace(dir: string) {
     const list = fs.readdirSync(dir);
     for (const file of list) {
       if (excludeFiles.has(file)) continue;
@@ -566,11 +525,9 @@ function deepSearchAndReplace(projectDir, dryRun, metadataSummary, recipe) {
           walkAndReplace(fullPath);
         }
       } else {
-        // Skip binary check
         try {
           const buffer = fs.readFileSync(fullPath);
           let isBinary = false;
-          // Check first 1024 bytes for null character
           for (let b = 0; b < Math.min(buffer.length, 1024); b++) {
             if (buffer[b] === 0) {
               isBinary = true;
@@ -585,7 +542,7 @@ function deepSearchAndReplace(projectDir, dryRun, metadataSummary, recipe) {
 
           for (const rule of rules) {
             if (rule.regex.test(newContent)) {
-              const matches = newContent.match(rule.regex).length;
+              const matches = (newContent.match(rule.regex) || []).length;
               count += matches;
               newContent = newContent.replace(rule.regex, (match) => casePreservingReplace(match, rule.replacement));
               hasMatch = true;
@@ -610,15 +567,14 @@ function deepSearchAndReplace(projectDir, dryRun, metadataSummary, recipe) {
 
   try {
     walkAndReplace(projectDir);
-  } catch (err) {
+  } catch (err: any) {
     log(`Error during search-and-replace: ${err.message}`, "ERROR");
   }
 
   log(`Search and replace completed. Total occurrences found: ${count} across ${fileCount} files.`, "SUCCESS");
 }
 
-// Inject structured logger setup in main files
-function injectPinoLogging(projectDir, dryRun, metadataSummary) {
+function injectPinoLogging(projectDir: string, dryRun: boolean, metadataSummary: any) {
   log("Injecting Pino logging setup in entry files...", "INFO");
   const candidates = [
     path.join(projectDir, "src", "main.jsx"),
@@ -689,14 +645,13 @@ function injectPinoLogging(projectDir, dryRun, metadataSummary) {
       fs.writeFileSync(file, newLines.join("\n") + "\n", "utf8");
       log(`Injected Pino logging setup into ${relPath}`, "SUCCESS");
       if (metadataSummary) metadataSummary.modified_files.push(relPath);
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to inject Pino logging into ${relPath}: ${err.message}`, "ERROR");
     }
   }
 }
 
-// Scaffolding testing & structured logs
-function scaffoldTestingAndLogging(projectDir, framework, dryRun, metadataSummary) {
+function scaffoldTestingAndLogging(projectDir: string, framework: string, dryRun: boolean, metadataSummary: any) {
   log("Setting up structured logging and testing scaffolding...", "INFO");
 
   const pkgPath = path.join(projectDir, "package.json");
@@ -750,15 +705,13 @@ function scaffoldTestingAndLogging(projectDir, framework, dryRun, metadataSummar
         fs.writeFileSync(pkgPath, JSON.stringify(data, null, 2) + "\n", "utf8");
         log("Updated package.json with test and logging dependencies.", "SUCCESS");
       }
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to update package.json for testing: ${err.message}`, "ERROR");
     }
   }
 
-  // Pino logger injection
   injectPinoLogging(projectDir, dryRun, metadataSummary);
 
-  // Playwright configuration file
   const port = framework === "nextjs" ? "3000" : "5173";
   const playwrightConfig = `import { defineConfig, devices } from '@playwright/test';
 
@@ -804,13 +757,12 @@ export default defineConfig({
         fs.writeFileSync(playwrightPath, playwrightConfig, "utf8");
         log(`Created Playwright config: ${playwrightPath}`, "SUCCESS");
         if (metadataSummary) metadataSummary.modified_files.push("playwright.config.js");
-      } catch (err) {
+      } catch (err: any) {
         log(`Failed to create Playwright config: ${err.message}`, "ERROR");
       }
     }
   }
 
-  // Create E2E test file
   const e2eDir = path.join(projectDir, "e2e");
   const e2eTestPath = path.join(e2eDir, "example.spec.js");
   if (!fs.existsSync(e2eTestPath)) {
@@ -823,13 +775,12 @@ export default defineConfig({
         fs.writeFileSync(e2eTestPath, e2eContent, "utf8");
         log(`Created E2E test file: ${e2eTestPath}`, "SUCCESS");
         if (metadataSummary) metadataSummary.modified_files.push("e2e/example.spec.js");
-      } catch (err) {
+      } catch (err: any) {
         log(`Failed to create E2E test file: ${err.message}`, "ERROR");
       }
     }
   }
 
-  // Vitest config file
   const vitestConfig = `import { defineConfig, configDefaults } from 'vitest/config';\nimport react from '@vitejs/plugin-react';\n\nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    environment: 'jsdom',\n    globals: true,\n    exclude: [...configDefaults.exclude, 'e2e/**'],\n  },\n});\n`;
   const vitestPath = path.join(projectDir, "vitest.config.js");
   if (!fs.existsSync(vitestPath)) {
@@ -840,13 +791,12 @@ export default defineConfig({
         fs.writeFileSync(vitestPath, vitestConfig, "utf8");
         log(`Created Vitest config: ${vitestPath}`, "SUCCESS");
         if (metadataSummary) metadataSummary.modified_files.push("vitest.config.js");
-      } catch (err) {
+      } catch (err: any) {
         log(`Failed to create Vitest config: ${err.message}`, "ERROR");
       }
     }
   }
 
-  // Mock test
   const mockTestPath = path.join(projectDir, "src", "App.test.jsx");
   if (!fs.existsSync(mockTestPath)) {
     if (dryRun) {
@@ -858,15 +808,14 @@ export default defineConfig({
         fs.writeFileSync(mockTestPath, mockTestContent, "utf8");
         log(`Created mock unit test: ${mockTestPath}`, "SUCCESS");
         if (metadataSummary) metadataSummary.modified_files.push("src/App.test.jsx");
-      } catch (err) {
+      } catch (err: any) {
         log(`Failed to create mock test file: ${err.message}`, "ERROR");
       }
     }
   }
 }
 
-// Scaffolding styles & vendor optimizations
-function scaffoldStylingAndOptimization(projectDir, dryRun, metadataSummary) {
+function scaffoldStylingAndOptimization(projectDir: string, dryRun: boolean, metadataSummary: any) {
   log("Setting up modern styling (Tailwind CSS) and bundle optimizations...", "INFO");
 
   const pkgPath = path.join(projectDir, "package.json");
@@ -894,12 +843,11 @@ function scaffoldStylingAndOptimization(projectDir, dryRun, metadataSummary) {
         fs.writeFileSync(pkgPath, JSON.stringify(data, null, 2) + "\n", "utf8");
         log("Updated package.json with styling dependencies.", "SUCCESS");
       }
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to update package.json with styling dependencies: ${err.message}`, "ERROR");
     }
   }
 
-  // Tailwind configuration
   const tailwindConfig = `/** @type {import('tailwindcss').Config} */\nmodule.exports = {\n  content: [\n    "./index.html",\n    "./src/**/*.{js,ts,jsx,tsx}",\n  ],\n  theme: {\n    extend: {},\n  },\n  plugins: [],\n}\n`;
   const tailwindPath = path.join(projectDir, "tailwind.config.js");
   if (!fs.existsSync(tailwindPath)) {
@@ -910,13 +858,12 @@ function scaffoldStylingAndOptimization(projectDir, dryRun, metadataSummary) {
         fs.writeFileSync(tailwindPath, tailwindConfig, "utf8");
         log(`Created Tailwind config: ${tailwindPath}`, "SUCCESS");
         if (metadataSummary) metadataSummary.modified_files.push("tailwind.config.js");
-      } catch (err) {
+      } catch (err: any) {
         log(`Failed to create Tailwind config: ${err.message}`, "ERROR");
       }
     }
   }
 
-  // PostCSS config
   const postcssConfig = `module.exports = {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n}\n`;
   const postcssPath = path.join(projectDir, "postcss.config.js");
   if (!fs.existsSync(postcssPath)) {
@@ -927,13 +874,12 @@ function scaffoldStylingAndOptimization(projectDir, dryRun, metadataSummary) {
         fs.writeFileSync(postcssPath, postcssConfig, "utf8");
         log(`Created PostCSS config: ${postcssPath}`, "SUCCESS");
         if (metadataSummary) metadataSummary.modified_files.push("postcss.config.js");
-      } catch (err) {
+      } catch (err: any) {
         log(`Failed to create PostCSS config: ${err.message}`, "ERROR");
       }
     }
   }
 
-  // Inject Google Fonts into index.html
   const htmlPath = path.join(projectDir, "index.html");
   if (fs.existsSync(htmlPath)) {
     try {
@@ -955,12 +901,11 @@ function scaffoldStylingAndOptimization(projectDir, dryRun, metadataSummary) {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to inject Google Fonts: ${err.message}`, "ERROR");
     }
   }
 
-  // Inject bundle optimizations into vite.config.js if it exists
   const vitePath = path.join(projectDir, "vite.config.js");
   if (fs.existsSync(vitePath)) {
     try {
@@ -972,7 +917,7 @@ function scaffoldStylingAndOptimization(projectDir, dryRun, metadataSummary) {
           const optContent = `  build: {\n    rollupOptions: {\n      output: {\n        manualChunks: {\n          vendor: ['react', 'react-dom']\n        }\n      }\n    }\n  }`;
           
           const match = viteContent.match(/plugins:\s*\[[^\]]*\]/);
-          if (match) {
+          if (match && match.index !== undefined) {
             const insertPos = match.index + match[0].length;
             const newVite = viteContent.slice(0, insertPos) + ",\n" + optContent + viteContent.slice(insertPos);
             fs.writeFileSync(vitePath, newVite, "utf8");
@@ -981,14 +926,13 @@ function scaffoldStylingAndOptimization(projectDir, dryRun, metadataSummary) {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to inject bundle optimization: ${err.message}`, "ERROR");
     }
   }
 }
 
-// Run package installation
-function runNpmInstall(projectDir, dryRun) {
+function runNpmInstall(projectDir: string, dryRun: boolean) {
   if (dryRun) {
     log("Would run package installation (npm/yarn/pnpm install)", "INFO");
     return;
@@ -1005,27 +949,30 @@ function runNpmInstall(projectDir, dryRun) {
   try {
     execSync(`${pkgMgr} install`, { cwd: projectDir, stdio: "inherit" });
     log("Dependencies successfully reinstalled.", "SUCCESS");
-  } catch (err) {
+  } catch (err: any) {
     log(`Package installation failed: ${err.message}`, "ERROR");
   }
 }
 
-// Main execution coordinator
-function main() {
-  const args = parseArgs();
-  const targetDir = path.resolve(args.dir);
-  const recipe = loadRecipe(args.recipe);
+export function runCleanser(options: {
+  dir: string;
+  rename: string | null;
+  dryRun: boolean;
+  recipe: string | null;
+  metadataSummary?: any;
+}) {
+  const targetDir = path.resolve(options.dir);
+  const recipe = loadRecipe(options.recipe);
   const recipeName = recipe.name || "decouple";
 
   log(`Starting ${recipeName} cleanup in: ${targetDir}`);
-  if (args.dryRun) {
+  if (options.dryRun) {
     log("DRY RUN MODE ENABLED - No changes will be saved", "WARNING");
   }
 
-  // Preflight diagnostics check
   runPreflightChecks(targetDir);
 
-  const metadataSummary = {
+  const localMetadata = options.metadataSummary || {
     migration_timestamp: new Date().toISOString(),
     original_project_name: "",
     new_project_name: "",
@@ -1037,19 +984,17 @@ function main() {
     extracted_env_vars: []
   };
 
-  // Environment variables extraction
-  extractEnvVariables(targetDir, metadataSummary, recipe);
+  extractEnvVariables(targetDir, localMetadata, recipe);
 
-  // Deletions phase
   log(`Step 1: Deleting ${recipeName} folders...`, "INFO");
   const deletePaths = recipe.delete_paths || [];
   for (const p of deletePaths) {
     const fullP = path.join(targetDir, p);
     if (fs.existsSync(fullP)) {
       const relP = path.relative(targetDir, fullP);
-      if (args.dryRun) {
+      if (options.dryRun) {
         log(`Would delete: ${fullP}`, "INFO");
-        metadataSummary.deleted_files_and_directories.push(relP);
+        localMetadata.deleted_files_and_directories.push(relP);
       } else {
         try {
           const stat = fs.statSync(fullP);
@@ -1059,58 +1004,48 @@ function main() {
             fs.unlinkSync(fullP);
           }
           log(`Deleted: ${fullP}`, "SUCCESS");
-          metadataSummary.deleted_files_and_directories.push(relP);
-        } catch (err) {
+          localMetadata.deleted_files_and_directories.push(relP);
+        } catch (err: any) {
           log(`Failed to delete ${fullP}: ${err.message}`, "ERROR");
         }
       }
     }
   }
 
-  // package.json cleanup
   log("Step 2: Cleaning package.json...", "INFO");
-  cleansePackageJson(targetDir, args.rename, args.dryRun, metadataSummary, recipe);
+  cleansePackageJson(targetDir, options.rename, options.dryRun, localMetadata, recipe);
 
-  // index.html cleanup
   log("Step 3: Cleaning index.html...", "INFO");
-  cleanseHtml(targetDir, args.dryRun, metadataSummary, recipe);
+  cleanseHtml(targetDir, options.dryRun, localMetadata, recipe);
 
-  // Case-preserving search-and-replace
   log("Step 4: Running global case-preserving replacement...", "INFO");
-  deepSearchAndReplace(targetDir, args.dryRun, metadataSummary, recipe);
+  deepSearchAndReplace(targetDir, options.dryRun, localMetadata, recipe);
 
-  // Framework config auto-generation
   log("Step 4.5: Writing framework configuration file...", "INFO");
   const framework = detectFramework(targetDir);
-  metadataSummary.detected_framework = framework;
-  writeFrameworkConfig(targetDir, framework, args.dryRun, metadataSummary);
+  localMetadata.detected_framework = framework;
+  writeFrameworkConfig(targetDir, framework, options.dryRun, localMetadata);
 
-  // Testing & logger setups
   log("Step 4.6: Scaffolding testing and logging capabilities...", "INFO");
-  scaffoldTestingAndLogging(targetDir, framework, args.dryRun, metadataSummary);
+  scaffoldTestingAndLogging(targetDir, framework, options.dryRun, localMetadata);
 
-  // Styles & rollup optimizations
   log("Step 4.7: Scaffolding styling and bundle optimizations...", "INFO");
-  scaffoldStylingAndOptimization(targetDir, args.dryRun, metadataSummary);
+  scaffoldStylingAndOptimization(targetDir, options.dryRun, localMetadata);
 
-  // Write status metadata
-  if (!args.dryRun) {
+  if (!options.dryRun) {
     const metaPath = path.join(targetDir, ".migration-status.json");
     try {
-      fs.writeFileSync(metaPath, JSON.stringify(metadataSummary, null, 2) + "\n", "utf8");
+      fs.writeFileSync(metaPath, JSON.stringify(localMetadata, null, 2) + "\n", "utf8");
       log(`Generated migration metadata at ${metaPath}`, "SUCCESS");
-    } catch (err) {
+    } catch (err: any) {
       log(`Failed to write migration status: ${err.message}`, "ERROR");
     }
   }
 
-  // Reinstall dependencies
   log("Step 5: Re-installing dependencies...", "INFO");
-  runNpmInstall(targetDir, args.dryRun);
+  runNpmInstall(targetDir, options.dryRun);
 
   log(`${recipeName.toUpperCase()} Decoupling CLI phase complete. Standalone project is ready for AI re-wiring and enhancement!`, "SUCCESS");
-}
-
-if (require.main === module) {
-  main();
+  
+  return localMetadata;
 }

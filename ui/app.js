@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Step 1: Save & Verify Base44
+  // Step 1: Save & Verify Source
   btnSaveB44.addEventListener('click', () => {
     const username = b44UsernameInput.value.trim();
     const password = b44PasswordInput.value.trim();
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    showStatus(b44AuthStatus, 'Connecting to Base44...', 'loading');
+    showStatus(b44AuthStatus, 'Connecting to Source Platform...', 'loading');
     btnSaveB44.disabled = true;
 
     // Send credentials to local server config API
@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSaveB44.disabled = false;
       showStatus(b44AuthStatus, 'Connected & Verified as ' + username, 'success');
       
-      localStorage.setItem('B44_EMAIL', username);
-      localStorage.setItem('B44_PASSWORD', password);
+      localStorage.setItem('SOURCE_EMAIL', username);
+      localStorage.setItem('SOURCE_PASSWORD', password);
 
       // Unlock project section
       projectSection.classList.remove('disabled');
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Step 1: Save & Verify GitHub
   btnSaveGH.addEventListener('click', () => {
     const token = ghTokenInput.value.trim();
-    const gitName = gitNameInput.value.trim() || 'Base44 Migrator';
+    const gitName = gitNameInput.value.trim() || 'LiberateJS Migrator';
     const gitEmail = gitEmailInput.value.trim() || 'migrator@standalone.io';
 
     if (!token) {
@@ -205,8 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function loadSavedConfig() {
-    const savedEmail = localStorage.getItem('B44_EMAIL');
-    const savedPwd = localStorage.getItem('B44_PASSWORD');
+    const savedEmail = localStorage.getItem('SOURCE_EMAIL') || localStorage.getItem('B44_EMAIL');
+    const savedPwd = localStorage.getItem('SOURCE_PASSWORD') || localStorage.getItem('B44_PASSWORD');
     const savedToken = localStorage.getItem('GH_TOKEN');
     const savedGitName = localStorage.getItem('GIT_NAME');
     const savedGitEmail = localStorage.getItem('GIT_EMAIL');
@@ -241,8 +241,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveConfigToServer(callback) {
     const payload = {
-      b44Email: b44UsernameInput.value.trim(),
-      b44Password: b44PasswordInput.value.trim(),
+      sourceEmail: b44UsernameInput.value.trim(),
+      sourcePassword: b44PasswordInput.value.trim(),
       ghToken: ghTokenInput.value.trim(),
       gitName: gitNameInput.value.trim(),
       gitEmail: gitEmailInput.value.trim()

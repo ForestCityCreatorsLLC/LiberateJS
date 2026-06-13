@@ -3,14 +3,14 @@ name: liberatejs
 description: Overhauls, decouples and migrates web apps from proprietary frameworks into clean, standalone React/Node apps using customizable recipes.
 ---
 
-# Base44 Standalone App Converter
+# LiberateJS Standalone App Converter
 
-Use this skill when the user requests to migrate a project originally built on the proprietary Base44 platform into a standalone web application. This skill automates the project ingestion (including browser login and scraping), cleansing of proprietary folders and dependencies, refactoring of wrapper components and APIs, build verification, and deployment to a new GitHub repository.
+Use this skill when the user requests to migrate a project originally built on a proprietary low-code/DSL platform into a standalone web application. This skill automates the project ingestion (including browser login and scraping), cleansing of proprietary folders and dependencies, refactoring of wrapper components and APIs, build verification, and deployment to a new GitHub repository.
 
 ## Pre-requisites & Setup
 The user must set up the following environment variables (either in their global OS environment or in a local `.env` file in the target workspace) if they want to automate browser ingestion and GitHub deployment:
-- `BASE44_EMAIL`: Username/email for the Base44 platform.
-- `BASE44_PASSWORD`: Password for the Base44 platform.
+- `SOURCE_EMAIL`: Username/email for the source platform.
+- `SOURCE_PASSWORD`: Password for the source platform.
 
 ---
 
@@ -19,8 +19,8 @@ The user must set up the following environment variables (either in their global
 This skill is packaged with a premium, glassmorphic interactive dashboard UI:
 - **Location**: [index.html](file:///C:/Users/igxxg/.gemini/config/skills/liberatejs/ui/index.html)
 - **Features**:
-  1. Storing and verifying Base44 credentials and GitHub PATs.
-  2. Scraping and selecting the target project from Base44.
+  1. Storing and verifying credentials and GitHub PATs.
+  2. Ingesting and selecting the target project from the source platform.
   3. Running the pipeline interactively with a step-by-step progress tracking console.
   4. Instant access links to the generated standalone GitHub repository.
 
@@ -35,16 +35,15 @@ When this skill is activated, you must act as the **Orchestrator** and delegate 
 ### 1. Ingestion & Automated Cleansing Phase (Cleanser Agent)
 1. **Workspace & Ingestion Check**:
    - Check if the target active workspace already has project files.
-   - If the workspace is empty, check if the user has provided a Base44 project ID or URL, or if credentials (`BASE44_EMAIL`/`BASE44_PASSWORD`) are present.
-   - **Browser Login**: If credentials are saved, launch browser tools to navigate to the Base44 login page (e.g. `https://base44.io/login` or the login portal URL). Auto-fill the credentials, submit, and verify the session.
-   - **Project Scraping**: Navigate to the user's dashboard, scrape the list of available projects/ideas, and output them in the chat so the user can select which project to pull.
-   - **Download**: Once selected, scrape/download the project files directly into the active workspace directory.
-2. **Execute Cleanser**:
-   - Run the automated Python cleanser script on the active workspace:
-     ```powershell
-     python "C:\Users\igxxg\.gemini\config\skills\liberatejs\scripts\decouple-cleanse.py" --dir . --recipe "recipes/base44.json"
-     ```
-   - Verify that the script successfully deletes the `base44` directory, removes proprietary dependencies and scripts from `package.json`, renames the project, updates `index.html`, generates `.env.example`, and creates `.migration-status.json`.
+   - If the workspace is empty, check if the user has provided a source project ID or URL, or if credentials (`SOURCE_EMAIL`/`SOURCE_PASSWORD`) are present.
+   - **Browser Login**: If credentials are saved, launch browser tools to navigate to the source platform login page (e.g. `https://platform.io/login` or the login portal URL). Auto-fill the credentials, submit, and verify the session.
+   - **Project Ingestion**: Navigate to the user's dashboard, scrape the list of available projects/ideas, and output them in the chat so the user can select which project to pull.
+   - **Download**: Once selected, download the project files directly into the active workspace directory.
+    - Run the automated Node.js cleanser script on the active workspace:
+      ```powershell
+      node "C:\Users\igxxg\.gemini\config\skills\liberatejs\bin\liberate.js" --src . --recipe "recipes/base44.json"
+      ```
+   - Verify that the script successfully deletes proprietary paths, removes dependencies and scripts from `package.json`, renames the project, updates `index.html`, generates `.env.example`, and creates `.migration-status.json`.
 3. **Install Dependencies**:
    - Run `npm install` (or `pnpm install` / `yarn install` depending on lockfiles) to regenerate a clean lockfile.
 
@@ -52,9 +51,9 @@ When this skill is activated, you must act as the **Orchestrator** and delegate 
 1. **Analyze Metadata**:
    - Read `.migration-status.json` and `.env.example` in the workspace to identify deleted wrappers, removed dependencies, and extracted environment variables.
 2. **Adapter Implementation**:
-   - **Router & State**: Replace proprietary wrapper components (like `<Base44Wrapper>`) in entry files (`App.jsx`, `main.jsx`, `index.js`) with standard React routers (`react-router-dom`) or custom context layouts. Map proprietary state hooks to standard hooks (`useState`) or standard state management libraries.
+   - **Router & State**: Replace proprietary wrapper components in entry files (`App.jsx`, `main.jsx`, `index.js`) with standard React routers (`react-router-dom`) or custom context layouts. Map proprietary state hooks to standard hooks (`useState`) or standard state management libraries.
    - **Environment Mapping**: Map old configuration variables to standard environment hooks (e.g. `import.meta.env` for Vite).
-   - **Layout & Aesthetics**: Ensure the visual layout looks stunning and premium. Build or restore global stylesheets, integrate custom Google Fonts (e.g., Outfit, Inter), and apply rich designs (vibrant colors, dark mode, glassmorphism) if removing the base44 template wrapper leaves the UI looking raw or default.
+   - **Layout & Aesthetics**: Ensure the visual layout looks stunning and premium. Build or restore global stylesheets, integrate custom Google Fonts (e.g., Outfit, Inter), and apply rich designs (vibrant colors, dark mode, glassmorphism) if removing the template wrapper leaves the UI looking raw or default.
 
 ### 3. Build Verification & CI/CD Phase (QA Agent)
 1. **Validation Checks**:

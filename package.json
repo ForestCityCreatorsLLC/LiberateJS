@@ -1,0 +1,30 @@
+{
+  "name": "liberatejs",
+  "version": "1.0.0",
+  "description": "Codebase decoupler and generic refactoring tool suite",
+  "type": "module",
+  "main": "./dist/cli.js",
+  "bin": {
+    "liberatejs": "./bin/liberate.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "recipes"
+  ],
+  "dependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/parser": "^7.24.0",
+    "@babel/traverse": "^7.24.0",
+    "@babel/generator": "^7.24.0",
+    "commander": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

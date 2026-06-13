@@ -60,17 +60,20 @@ Run the provided installer script in your PowerShell console:
 
 If you prefer to operate directly from the terminal without the visual dashboard, you can trigger the JavaScript cleanser script directly.
 
-#### 1. Running the Cleanse Script Directly
+#### 1. Running the CLI Tool Directly
 Navigate to the directory of the project to cleanse, and run:
 ```powershell
-node path/to/decouple-cleanse.js --dir . --rename "my-standalone-app" --recipe path/to/recipe.json
+node path/to/bin/liberate.js --src . --rename "my-standalone-app" --recipe path/to/recipe.json
 ```
 
 **Supported Options:**
-*   `--dir`: The target project folder directory containing the app to decouple (default: `.`).
-*   `--rename`: Sets the new name for the project in `package.json` (e.g., updates metadata).
-*   `--recipe`: Path to the JSON recipe file (e.g., `recipes/base44.json`) defining the file deletion paths, package renaming, and string replacements.
+*   `-s, --src <path>`: The target source project folder containing the app to decouple (default: `.`).
+*   `-d, --dest <path>`: The destination folder where the clean app should be created (leaves source untouched if different).
+*   `-n, --rename <name>`: Sets the new name for the project in `package.json` (e.g., updates metadata).
+*   `-r, --recipe <path>`: Path to the JSON recipe file (e.g., `recipes/base44.json`) defining the file deletion paths, package renaming, and string replacements.
+*   `--stage <cleanse|rewrite|all>`: Run specific pipeline stages (default: `all`).
 *   `--dry-run`: Runs checks and lists files to modify/delete without writing changes.
+*   `-v, --verbose`: Enable detailed logs.
 
 #### 2. Running using the `npx` Wrapper
 ```bash
