@@ -488,12 +488,12 @@ const server = http.createServer((req, res) => {
         sendLog(`[WARNING] Failed to commit initial files: ${err.message}`, 'warning');
       }
 
-      // Create and check out temporary branch migration/base44-cleanup
+      // Create and check out temporary branch migration/decouple-cleanup
       try {
-        execSync('git checkout -B migration/base44-cleanup', { cwd: targetDir });
-        sendLog('Created and checked out temporary branch: migration/base44-cleanup', 'success');
+        execSync('git checkout -B migration/decouple-cleanup', { cwd: targetDir });
+        sendLog('Created and checked out temporary branch: migration/decouple-cleanup', 'success');
       } catch (err) {
-        sendLog(`[ERROR] Failed to checkout migration/base44-cleanup branch: ${err.message}`, 'error');
+        sendLog(`[ERROR] Failed to checkout migration/decouple-cleanup branch: ${err.message}`, 'error');
       }
     }
 
@@ -512,7 +512,7 @@ const server = http.createServer((req, res) => {
 
     // Trigger sequential operations
     // Step 1: Ingest
-    sendLog('Step 1: Downloading files from Base44 workspace...', 'info');
+    sendLog('Step 1: Downloading files from source platform workspace...', 'info');
     setTimeout(() => {
       sendLog('Authenticating with saved credentials...', 'info');
       sendLog('Ingestion complete. Extracting templates catalog...', 'success');
@@ -522,8 +522,8 @@ const server = http.createServer((req, res) => {
           execSync('git add .', { cwd: targetDir });
           const diff = execSync('git diff --cached --name-only', { cwd: targetDir }).toString().trim();
           if (diff) {
-            execSync('git commit -m "chore: ingest base44 codebase"', { cwd: targetDir });
-            sendLog('Committed ingested files to migration/base44-cleanup.', 'success');
+            execSync('git commit -m "chore: ingest source codebase"', { cwd: targetDir });
+            sendLog('Committed ingested files to migration/decouple-cleanup.', 'success');
           }
         } catch (err) {
           sendLog(`[WARNING] Failed to commit ingested changes: ${err.message}`, 'warning');
@@ -607,8 +607,8 @@ const server = http.createServer((req, res) => {
             execSync('git add .', { cwd: targetDir });
             const diff = execSync('git diff --cached --name-only', { cwd: targetDir }).toString().trim();
             if (diff) {
-              execSync('git commit -m "chore: cleanse base44 dependencies"', { cwd: targetDir });
-              sendLog('Committed cleansed files to migration/base44-cleanup.', 'success');
+              execSync('git commit -m "chore: cleanse proprietary dependencies"', { cwd: targetDir });
+              sendLog('Committed cleansed files to migration/decouple-cleanup.', 'success');
             }
           } catch (err) {
             sendLog(`[WARNING] Failed to commit cleansed changes: ${err.message}`, 'warning');
@@ -647,7 +647,7 @@ const server = http.createServer((req, res) => {
                 const diff = execSync('git diff --cached --name-only', { cwd: targetDir }).toString().trim();
                 if (diff) {
                   execSync('git commit -m "chore: AST rewrites and framework route configurations"', { cwd: targetDir });
-                  sendLog('Committed reworked files and routes to migration/base44-cleanup.', 'success');
+                  sendLog('Committed reworked files and routes to migration/decouple-cleanup.', 'success');
                 }
               } catch (err) {
                 sendLog(`[WARNING] Failed to commit reworked changes: ${err.message}`, 'warning');
@@ -868,15 +868,15 @@ const server = http.createServer((req, res) => {
                     try {
                       if (gitInitialized) {
                         try {
-                          sendLog(`Merging temporary branch migration/base44-cleanup back into ${originalBranch}...`, 'info');
+                          sendLog(`Merging temporary branch migration/decouple-cleanup back into ${originalBranch}...`, 'info');
                           execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
-                          execSync('git merge migration/base44-cleanup', { cwd: targetDir });
-                          sendLog(`Merged migration/base44-cleanup into ${originalBranch} successfully.`, 'success');
+                          execSync('git merge migration/decouple-cleanup', { cwd: targetDir });
+                          sendLog(`Merged migration/decouple-cleanup into ${originalBranch} successfully.`, 'success');
                         } catch (mergeErr) {
-                          sendLog(`[WARNING] Merge failed: ${mergeErr.message}. Force-resetting ${originalBranch} to migration/base44-cleanup.`, 'warning');
+                          sendLog(`[WARNING] Merge failed: ${mergeErr.message}. Force-resetting ${originalBranch} to migration/decouple-cleanup.`, 'warning');
                           try {
                             execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
-                            execSync(`git reset --hard migration/base44-cleanup`, { cwd: targetDir });
+                            execSync(`git reset --hard migration/decouple-cleanup`, { cwd: targetDir });
                           } catch (e) {
                             sendLog(`[ERROR] Failed to switch/reset original branch: ${e.message}`, 'error');
                           }
@@ -971,15 +971,15 @@ const server = http.createServer((req, res) => {
                 try {
                   if (gitInitialized) {
                     try {
-                      sendLog(`Merging temporary branch migration/base44-cleanup back into ${originalBranch}...`, 'info');
+                      sendLog(`Merging temporary branch migration/decouple-cleanup back into ${originalBranch}...`, 'info');
                       execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
-                      execSync('git merge migration/base44-cleanup', { cwd: targetDir });
-                      sendLog(`Merged migration/base44-cleanup into ${originalBranch} successfully.`, 'success');
+                      execSync('git merge migration/decouple-cleanup', { cwd: targetDir });
+                      sendLog(`Merged migration/decouple-cleanup into ${originalBranch} successfully.`, 'success');
                     } catch (mergeErr) {
-                      sendLog(`[WARNING] Merge failed: ${mergeErr.message}. Force-resetting ${originalBranch} to migration/base44-cleanup.`, 'warning');
+                      sendLog(`[WARNING] Merge failed: ${mergeErr.message}. Force-resetting ${originalBranch} to migration/decouple-cleanup.`, 'warning');
                       try {
                         execSync(`git checkout "${originalBranch}"`, { cwd: targetDir });
-                        execSync(`git reset --hard migration/base44-cleanup`, { cwd: targetDir });
+                        execSync(`git reset --hard migration/decouple-cleanup`, { cwd: targetDir });
                       } catch (e) {
                         sendLog(`[ERROR] Failed to switch/reset original branch: ${e.message}`, 'error');
                       }

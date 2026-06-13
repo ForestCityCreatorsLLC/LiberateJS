@@ -18,7 +18,7 @@
         <span class="icon-cube">⚡</span>
         <h1>LiberateJS</h1>
       </div>
-      <p class="subtitle">Convert and push Base44 applications to standalone GitHub repositories instantly.</p>
+      <p class="subtitle">Convert and push proprietary applications to standalone GitHub repositories instantly.</p>
     </header>
 
     <main class="glass-card">
@@ -29,10 +29,10 @@
           <h2>Legal Risk & Compliance Agreement</h2>
         </div>
         <div class="disclaimer-box">
-          <p>This utility operates entirely locally on your machine. You will log into the Base44 platform using your own authorized credentials to retrieve your own codebase. Before using this tool, you must acknowledge that:</p>
+          <p>This utility operates entirely locally on your machine. You will log into the source platform using your own authorized credentials to retrieve your own codebase. Before using this tool, you must acknowledge that:</p>
           <ul>
             <li>You own the legal rights or have a license for the codebase being migrated.</li>
-            <li>No proprietary Base44 libraries or closed-source runtime engines are copied or redistributed.</li>
+            <li>No proprietary libraries or closed-source runtime engines are copied or redistributed.</li>
             <li>Using this tool may violate the Terms of Service (ToS) of the source platform, and you assume all risks (including potential account termination).</li>
           </ul>
           <div class="checkbox-group">
@@ -55,16 +55,16 @@
         <div class="forms-grid">
           <!-- Base44 Credentials Form -->
           <div class="auth-card">
-            <h3>Base44 Login</h3>
+            <h3>Source Platform Login</h3>
             <div class="input-group">
               <label for="b44-username">Username / Email</label>
-              <input type="email" id="b44-username" placeholder="user@base44.io" autocomplete="off">
+              <input type="email" id="b44-username" placeholder="user@platform.io" autocomplete="off">
             </div>
             <div class="input-group">
               <label for="b44-password">Password</label>
               <input type="password" id="b44-password" placeholder="••••••••" autocomplete="off">
             </div>
-            <button class="btn btn-secondary" id="btn-save-b44">Save & Verify Base44</button>
+            <button class="btn btn-secondary" id="btn-save-b44">Save & Verify Credentials</button>
             <div class="status-msg" id="b44-auth-status">Not connected</div>
           </div>
 
@@ -95,7 +95,7 @@
       <section class="config-section disabled" id="project-section">
         <div class="section-header">
           <span class="step-num">2</span>
-          <h2>Select Base44 Project</h2>
+          <h2>Select Project</h2>
         </div>
         
         <div class="selection-container">
@@ -103,7 +103,7 @@
             <label for="project-select">Available Projects</label>
             <div class="select-wrapper">
               <select id="project-select" disabled>
-                <option value="" disabled selected>Connect to Base44 to load projects...</option>
+                <option value="" disabled selected>Connect to platform to load projects...</option>
               </select>
               <button class="btn btn-icon" id="btn-refresh-projects" disabled>🔄</button>
             </div>
@@ -132,13 +132,13 @@
               <span class="step-icon">⚪</span>
               <div class="step-details">
                 <h4>1. Ingesting Project Code</h4>
-                <p>Downloading and extracting files from Base44...</p>
+                <p>Downloading and extracting files from source platform...</p>
               </div>
             </div>
             <div class="step-item" id="step-cleanse">
               <span class="step-icon">⚪</span>
               <div class="step-details">
-                <h4>2. Stripping Base44 Metadata</h4>
+                <h4>2. Stripping Platform Metadata</h4>
                 <p>Deleting proprietary scripts, configs, and npm dependencies...</p>
               </div>
             </div>
@@ -174,7 +174,7 @@
           <div class="success-card hidden" id="success-card">
             <div class="success-icon">🎉</div>
             <h3>Conversion Successful!</h3>
-            <p>Your application is now a standalone project completely decoupled from Base44 and hosted on GitHub.</p>
+            <p>Your application is now a standalone project completely decoupled from the source platform and hosted on GitHub.</p>
             <div class="links-group">
               <a href="#" target="_blank" class="btn btn-secondary" id="link-repo">Open GitHub Repository</a>
               <button class="btn btn-secondary" id="btn-reset">Convert Another Project</button>
