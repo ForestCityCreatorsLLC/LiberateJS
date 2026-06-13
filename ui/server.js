@@ -534,21 +534,18 @@ const server = http.createServer((req, res) => {
         res.write(`data: ${JSON.stringify({ step: 'ingest', status: 'success' })}\n\n`);
       }
 
-      // Step 2: Cleanse (Run decouple-cleanse.py)
-      sendLog('Step 2: Executing Python cleansing script decouple-cleanse.py...', 'info');
+      // Step 2: Cleanse (Run decouple-cleanse.js)
+      sendLog('Step 2: Executing JavaScript cleansing script decouple-cleanse.js...', 'info');
       
-      let scriptPath = path.join(__dirname, '..', 'scripts', 'decouple-cleanse.py');
-      if (!fs.existsSync(scriptPath)) {
-        scriptPath = path.join(__dirname, '..', 'decouple-cleanse.py');
-      }
+      const scriptPath = path.join(__dirname, '..', 'scripts', 'decouple-cleanse.js');
       
       let cleanseHandled = false;
       try {
         const recipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
-        cleanseProc = spawn('python', [scriptPath, '--dir', targetDir, '--rename', repoName, '--recipe', recipePath]);
+        cleanseProc = spawn('node', [scriptPath, '--dir', targetDir, '--rename', repoName, '--recipe', recipePath]);
       } catch (err) {
         cleanseHandled = true;
-        sendLog(`[ERROR] Failed to spawn Python process: ${err.message}. Ensure Python is installed and in your PATH.`, 'error');
+        sendLog(`[ERROR] Failed to spawn Node.js process: ${err.message}.`, 'error');
         if (gitInitialized) {
           rollbackMigration(targetDir, originalBranch, sendLog);
         }

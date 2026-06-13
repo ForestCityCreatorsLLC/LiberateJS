@@ -16,7 +16,7 @@ $recipesDir = "$globalConfigDir\recipes"
 
 $sourceDir = Get-Item .
 $sourceSkillFile = Join-Path $sourceDir "SKILL.md"
-$sourceScript = Join-Path $sourceDir "decouple-cleanse.py"
+$sourceScript = Join-Path $sourceDir "scripts\decouple-cleanse.js"
 $sourceLauncher = Join-Path $sourceDir "run-dashboard.bat"
 $sourceUiIndex = Join-Path $sourceDir "ui\index.html"
 $sourceUiStyle = Join-Path $sourceDir "ui\styles.css"
@@ -29,15 +29,7 @@ $sourceRecipes = Join-Path $sourceDir "recipes"
 Write-Host "[1/4] Verifying system dependencies..." -ForegroundColor Yellow
 $dependenciesPassed = $true
 
-# Check Python
-try {
-    $pyVer = python --version 2>&1
-    Write-Host "  [OK] Python is installed: $pyVer" -ForegroundColor Green
-} catch {
-    Write-Host "  [X] Python was not found in your system PATH." -ForegroundColor Red
-    Write-Host "      Please install Python 3.x to execute the cleansing script." -ForegroundColor DarkGray
-    $dependenciesPassed = $false
-}
+# Git is required for version control
 
 # Check Git
 try {
@@ -101,7 +93,7 @@ if (Test-Path $sourceSkillFile) {
 
 # Copy Cleansing script
 if (Test-Path $sourceScript) {
-    Copy-Item -Path $sourceScript -Destination (Join-Path $scriptsDir "decouple-cleanse.py") -Force
+    Copy-Item -Path $sourceScript -Destination (Join-Path $scriptsDir "decouple-cleanse.js") -Force
     Write-Host "  [OK] Copied cleanser script to global scripts directory." -ForegroundColor Green
 }
 
@@ -136,7 +128,7 @@ Write-Host ""
 # 5. Diagnostic Validation
 Write-Host "[4/4] Running installation diagnostics..." -ForegroundColor Yellow
 $installedSkillPath = Join-Path $globalConfigDir "SKILL.md"
-$installedScriptPath = Join-Path $scriptsDir "decouple-cleanse.py"
+$installedScriptPath = Join-Path $scriptsDir "decouple-cleanse.js"
 $installedAstRewriterPath = Join-Path $scriptsDir "ast-rewriter.js"
 $installedUiIndex = Join-Path $uiDir "index.html"
 $installedLauncher = Join-Path $globalConfigDir "run-dashboard.bat"

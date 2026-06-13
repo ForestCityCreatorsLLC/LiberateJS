@@ -1,15 +1,10 @@
 {
-  "migration_timestamp": "2026-06-12T11:40:01.143647",
+  "migration_timestamp": "2026-06-13T15:32:33.958Z",
   "original_project_name": "my-app-dashboard",
   "new_project_name": "my-app-dashboard",
   "detected_framework": "vite",
   "deleted_files_and_directories": [],
-  "modified_files": [
-    "tailwind.config.js",
-    "postcss.config.js",
-    "index.html",
-    "vite.config.js"
-  ],
+  "modified_files": [],
   "removed_dependencies": [],
   "removed_scripts": [],
   "extracted_env_vars": []

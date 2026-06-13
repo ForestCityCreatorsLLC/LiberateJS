@@ -26,8 +26,7 @@ This guide covers everything you need to set up LiberateJS, run it locally, navi
 Before running LiberateJS, ensure your local workstation has the following system dependencies installed and configured:
 
 ### ⚙️ System Dependencies
-*   **Node.js (v18.0.0+)**: Required to run the local dashboard bridge server (`ui/server.js`) and build the decoupled React application (e.g., executing `npm install` and `npm run dev`).
-*   **Python (v3.8+)**: Required to run the automated cleanser script (`decouple-cleanse.py`) which parses directories, cleanses proprietary code using customizable recipes, and outputs a standard structure.
+*   **Node.js (v18.0.0+)**: Required to run the local dashboard bridge server (`ui/server.js`) and the automated cleanser script (`scripts/decouple-cleanse.js`) to decouple and compile React projects.
 *   **Git**: Required for initializing version control in the migrated workspace and staging the new codebase.
 *   **GitHub CLI (`gh`)** *(Optional but recommended)*: Highly recommended to automate GitHub repository provisioning and push directly from the migration pipeline.
 
@@ -48,7 +47,7 @@ Run the provided installer script in your PowerShell console:
 ```
 
 **What the installer does:**
-1. Verifies that **Python**, **Git**, and **Node.js** are present in your system PATH.
+1. Verifies that **Git** and **Node.js** are present in your system PATH.
 2. Checks for **GitHub CLI (`gh`)** and reports status.
 3. Initializes global config paths under `~/.gemini/config/skills/liberatejs/`.
 4. Deploys the CLI script, AST rewriter, launcher batch scripts, and UI assets to the global directories.
@@ -59,12 +58,12 @@ Run the provided installer script in your PowerShell console:
 
 ### CLI & Script Commands
 
-If you prefer to operate directly from the terminal without the visual dashboard, you can trigger the Python cleanser script directly.
+If you prefer to operate directly from the terminal without the visual dashboard, you can trigger the JavaScript cleanser script directly.
 
 #### 1. Running the Cleanse Script Directly
 Navigate to the directory of the project to cleanse, and run:
 ```powershell
-python path/to/decouple-cleanse.py --dir . --rename "my-standalone-app" --recipe path/to/recipe.json
+node path/to/decouple-cleanse.js --dir . --rename "my-standalone-app" --recipe path/to/recipe.json
 ```
 
 **Supported Options:**
@@ -156,15 +155,7 @@ Once the cleansing script finishes, the **Real-time Code Diff Viewer** is popula
     3. Restart your terminal or command prompt for the environment variables to refresh.
     4. Verify installation by running: `node -v` and `npm -v`.
 
-### 🐍 3. Missing Python Interpreter
-*   **Symptom**: Cleanse phase fails with `python was not found` or `python: command not found`.
-*   **Cause**: Python 3.x is not installed or not in PATH.
-*   **Resolution**:
-    1. Install Python 3.x from the official website or Microsoft Store.
-    2. **Crucial**: Check the box **"Add python.exe to PATH"** at the bottom of the installer setup window.
-    3. Test terminal detection by running: `python --version` (or `py --version`).
-
-### 🔌 4. Port 4444 Already In Use
+### 🔌 3. Port 4444 Already In Use
 *   **Symptom**: Launching the local server results in `EADDRINUSE: address already in use :::4444`.
 *   **Cause**: Another instance of the dashboard server or another app is occupying port 4444.
 *   **Resolution**:
@@ -177,7 +168,7 @@ Once the cleansing script finishes, the **Real-time Code Diff Viewer** is popula
       const PORT = 4444; // Change this to another free port, e.g. 4545
       ```
 
-### 🐙 5. Git / GitHub Auth Failures
+### 🐙 4. Git / GitHub Auth Failures
 *   **Symptom**: The pipeline fails at Step 5 (Deploy) with authentication errors.
 *   **Cause**: Your local shell is not logged in to GitHub, or the token provided does not have `repo` scope.
 *   **Resolution**:
