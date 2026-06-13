@@ -730,7 +730,34 @@ function addImportsIfMissing(code, importLine, checkPath) {
  * Scans code to replace legacy Base44DB calls and Auth tags/hooks.
  * Keeps comments and string literals intact.
  */
-function rewriteDBAndAuth(code, nextJS) {
+function rewriteDBAndAuth(code, recipe, nextJS) {
+  const astRules = (recipe && recipe.ast_rules) || {};
+  const dbWrapper = astRules.db_wrapper || "Base44DB";
+  const authWrapper = astRules.auth_wrapper || "Base44Auth";
+  const authHook = astRules.auth_hook || "useBase44User";
+
+  const dbReplacementImport = astRules.db_replacement_import || "import { prisma } from '@/lib/prisma';";
+  const dbReplacementPath = astRules.db_replacement_path || "@/lib/prisma";
+
+  let authReplacementWrapper = "";
+  let authReplacementHook = "";
+  let authReplacementImport = "";
+  let authReplacementPath = "";
+
+  if (nextJS) {
+    const nextAuth = astRules.auth_replacement_nextjs || {};
+    authReplacementWrapper = nextAuth.wrapper || "SessionProvider";
+    authReplacementHook = nextAuth.hook || "useSession";
+    authReplacementImport = nextAuth.import || "import { SessionProvider, useSession } from 'next-auth/react';";
+    authReplacementPath = nextAuth.path || "next-auth/react";
+  } else {
+    const spaAuth = astRules.auth_replacement_spa || {};
+    authReplacementWrapper = spaAuth.wrapper || "AuthProvider";
+    authReplacementHook = spaAuth.hook || "useAuth";
+    authReplacementImport = spaAuth.import || "import { AuthProvider, useAuth } from '@/context/AuthContext';";
+    authReplacementPath = spaAuth.path || "@/context/AuthContext";
+  }
+
   let result = "";
   let lastIndex = 0;
   let inString = null;
@@ -786,10 +813,10 @@ function rewriteDBAndAuth(code, nextJS) {
       continue;
     }
     
-    // Base44DB call
-    if (code.slice(i, i + 9) === 'Base44DB.') {
+    // DB wrapper call
+    if (code.slice(i, i + dbWrapper.length + 1) === `${dbWrapper}.`) {
       const dbStart = i;
-      i += 9;
+      i += dbWrapper.length + 1;
       let methodName = "";
       while (i < n && /[a-zA-Z0-9_$]/.test(code[i])) {
         methodName += code[i];
@@ -866,46 +893,46 @@ function rewriteDBAndAuth(code, nextJS) {
     }
     
     // Auth Tags
-    if (code.slice(i, i + 12) === '<Base44Auth>') {
-      const authReplacement = nextJS ? '<SessionProvider>' : '<AuthProvider>';
+    if (code.slice(i, i + authWrapper.length + 2) === `<${authWrapper}>`) {
+      const authReplacement = `<${authReplacementWrapper}>`;
       result += code.slice(lastIndex, i) + authReplacement;
       hasAuth = true;
-      lastIndex = i + 12;
-      i += 12;
+      lastIndex = i + authWrapper.length + 2;
+      i += authWrapper.length + 2;
       continue;
     }
-    if (code.slice(i, i + 12) === '<Base44Auth ') {
-      const authReplacement = nextJS ? '<SessionProvider ' : '<AuthProvider ';
+    if (code.slice(i, i + authWrapper.length + 2) === `<${authWrapper} `) {
+      const authReplacement = `<${authReplacementWrapper} `;
       result += code.slice(lastIndex, i) + authReplacement;
       hasAuth = true;
-      lastIndex = i + 12;
-      i += 12;
+      lastIndex = i + authWrapper.length + 2;
+      i += authWrapper.length + 2;
       continue;
     }
-    if (code.slice(i, i + 13) === '</Base44Auth>') {
-      const authReplacement = nextJS ? '</SessionProvider>' : '</AuthProvider>';
+    if (code.slice(i, i + authWrapper.length + 3) === `</${authWrapper}>`) {
+      const authReplacement = `</${authReplacementWrapper}>`;
       result += code.slice(lastIndex, i) + authReplacement;
       hasAuth = true;
-      lastIndex = i + 13;
-      i += 13;
+      lastIndex = i + authWrapper.length + 3;
+      i += authWrapper.length + 3;
       continue;
     }
     
     // Auth Hook
-    if (code.slice(i, i + 15) === 'useBase44User()') {
-      const hookReplacement = nextJS ? 'useSession()' : 'useAuth()';
+    if (code.slice(i, i + authHook.length + 2) === `${authHook}()`) {
+      const hookReplacement = `${authReplacementHook}()`;
       result += code.slice(lastIndex, i) + hookReplacement;
       hasAuth = true;
-      lastIndex = i + 15;
-      i += 15;
+      lastIndex = i + authHook.length + 2;
+      i += authHook.length + 2;
       continue;
     }
-    if (code.slice(i, i + 14) === 'useBase44User(') {
-      const hookReplacement = nextJS ? 'useSession(' : 'useAuth(';
+    if (code.slice(i, i + authHook.length + 1) === `${authHook}(`) {
+      const hookReplacement = `${authReplacementHook}(`;
       result += code.slice(lastIndex, i) + hookReplacement;
       hasAuth = true;
-      lastIndex = i + 14;
-      i += 14;
+      lastIndex = i + authHook.length + 1;
+      i += authHook.length + 1;
       continue;
     }
     
@@ -915,14 +942,10 @@ function rewriteDBAndAuth(code, nextJS) {
   result += code.slice(lastIndex);
   
   if (hasDB) {
-    result = addImportsIfMissing(result, "import { prisma } from '@/lib/prisma';", "@/lib/prisma");
+    result = addImportsIfMissing(result, dbReplacementImport, dbReplacementPath);
   }
   if (hasAuth) {
-    if (nextJS) {
-      result = addImportsIfMissing(result, "import { SessionProvider, useSession } from 'next-auth/react';", "next-auth/react");
-    } else {
-      result = addImportsIfMissing(result, "import { AuthProvider, useAuth } from '@/context/AuthContext';", "@/context/AuthContext");
-    }
+    result = addImportsIfMissing(result, authReplacementImport, authReplacementPath);
   }
   
   return result;
@@ -970,10 +993,16 @@ let isNextJS = false;
 /**
  * Main parser entry point to clean imports and strip JSX wrappers.
  */
-function processContent(code, wrapperNames, nextJS = isNextJS) {
-  const allTargets = Array.from(new Set([...wrapperNames, "Base44DB", "Base44Auth", "useBase44User"]));
+function processContent(code, recipe, nextJS = isNextJS) {
+  const astRules = (recipe && recipe.ast_rules) || {};
+  const wrapperNames = astRules.wrappers || ["StandaloneWrapper", "Base44Wrapper"];
+  const dbWrapper = astRules.db_wrapper || "Base44DB";
+  const authWrapper = astRules.auth_wrapper || "Base44Auth";
+  const authHook = astRules.auth_hook || "useBase44User";
+
+  const allTargets = Array.from(new Set([...wrapperNames, dbWrapper, authWrapper, authHook]));
   let rewritten = cleanImports(code, allTargets);
-  rewritten = rewriteDBAndAuth(rewritten, nextJS);
+  rewritten = rewriteDBAndAuth(rewritten, recipe, nextJS);
   rewritten = stripJSX(rewritten, wrapperNames);
   return rewritten;
 }
@@ -1187,9 +1216,18 @@ export function Dashboard() {
 
   let passed = 0;
   console.log("Running self-tests for ast-rewriter.js...");
+  const mockRecipe = {
+    name: "base44",
+    ast_rules: {
+      wrappers: ["StandaloneWrapper", "Base44Wrapper"],
+      db_wrapper: "Base44DB",
+      auth_wrapper: "Base44Auth",
+      auth_hook: "useBase44User"
+    }
+  };
   for (const t of tests) {
     const nextJSOption = t.nextJS !== undefined ? t.nextJS : isNextJS;
-    const output = processContent(t.input, ["StandaloneWrapper", "Base44Wrapper"], nextJSOption).trim();
+    const output = processContent(t.input, mockRecipe, nextJSOption).trim();
     const expectedTrimmed = t.expected.trim();
     if (output === expectedTrimmed) {
       console.log(`[PASS] ${t.name}`);
@@ -1213,8 +1251,43 @@ const dryRun = args.includes('--dry-run');
 const testMode = args.includes('--test');
 const verbose = args.includes('--verbose');
 
-// Parse target wrapper names (configurable via --wrappers flag)
+// Load recipe configuration
+let recipe = null;
+const recipeArgIndex = args.findIndex(arg => arg.startsWith('--recipe='));
+let recipePath = "";
+if (recipeArgIndex !== -1) {
+  recipePath = args[recipeArgIndex].split('=')[1];
+} else {
+  const recipeIndex = args.indexOf('--recipe');
+  if (recipeIndex !== -1 && recipeIndex + 1 < args.length) {
+    recipePath = args[recipeIndex + 1];
+  }
+}
+
+if (recipePath) {
+  try {
+    const recipeContent = fs.readFileSync(path.resolve(recipePath), 'utf8');
+    recipe = JSON.parse(recipeContent);
+  } catch (err) {
+    console.error(`Failed to load recipe from ${recipePath}: ${err.message}`);
+    process.exit(1);
+  }
+} else {
+  // Try to load default base44 recipe relative to script
+  const defaultRecipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
+  if (fs.existsSync(defaultRecipePath)) {
+    try {
+      const recipeContent = fs.readFileSync(defaultRecipePath, 'utf8');
+      recipe = JSON.parse(recipeContent);
+    } catch (err) {}
+  }
+}
+
+// Parse target wrapper names (configurable via --wrappers flag, fallback to recipe rules)
 let targets = ["StandaloneWrapper", "Base44Wrapper"];
+if (recipe && recipe.ast_rules && recipe.ast_rules.wrappers) {
+  targets = recipe.ast_rules.wrappers;
+}
 const wrappersArgIndex = args.findIndex(arg => arg.startsWith('--wrappers='));
 if (wrappersArgIndex !== -1) {
   const value = args[wrappersArgIndex].split('=')[1];
@@ -1226,11 +1299,25 @@ if (wrappersArgIndex !== -1) {
   }
 }
 
+if (!recipe) {
+  recipe = {
+    name: "base44",
+    ast_rules: {
+      wrappers: targets,
+      db_wrapper: "Base44DB",
+      auth_wrapper: "Base44Auth",
+      auth_hook: "useBase44User"
+    }
+  };
+}
+
 const wrappersIndex = args.indexOf('--wrappers');
+const recipeIndex = args.indexOf('--recipe');
 const paths = args.filter((arg, idx) => {
   if (arg.startsWith('--')) return false;
   if (targets.includes(arg)) return false;
   if (wrappersIndex !== -1 && idx === wrappersIndex + 1) return false;
+  if (recipeIndex !== -1 && idx === recipeIndex + 1) return false;
   return true;
 });
 
@@ -1265,7 +1352,7 @@ if (testMode) {
 if (paths.length === 0) {
   console.log("AST Rewriter CLI Tool");
   console.log("-------------------");
-  console.log("Usage: node ast-rewriter.js <file-or-directory-paths> [--dry-run] [--verbose] [--wrappers=List,Of,Wrappers]");
+  console.log("Usage: node ast-rewriter.js <file-or-directory-paths> [--dry-run] [--verbose] [--wrappers=List,Of,Wrappers] [--recipe=PathToRecipe]");
   console.log("       node ast-rewriter.js --test");
   process.exit(1);
 }
@@ -1317,7 +1404,7 @@ let modifiedCount = 0;
 for (const file of filesToProcess) {
   try {
     const originalContent = fs.readFileSync(file, 'utf8');
-    const newContent = processContent(originalContent, targets);
+    const newContent = processContent(originalContent, recipe);
 
     if (originalContent !== newContent) {
       modifiedCount++;

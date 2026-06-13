@@ -1,6 +1,6 @@
 ---
 name: liberatejs
-description: Cleanses and migrates a proprietary Base44 web app into a clean, standalone React/Node app, registers Git, and pushes it to GitHub.
+description: Overhauls, decouples and migrates web apps from proprietary frameworks into clean, standalone React/Node apps using customizable recipes.
 ---
 
 # Base44 Standalone App Converter
@@ -42,7 +42,7 @@ When this skill is activated, you must act as the **Orchestrator** and delegate 
 2. **Execute Cleanser**:
    - Run the automated Python cleanser script on the active workspace:
      ```powershell
-     python "C:\Users\igxxg\.gemini\config\skills\liberatejs\scripts\base44-cleanse.py" --dir .
+     python "C:\Users\igxxg\.gemini\config\skills\liberatejs\scripts\decouple-cleanse.py" --dir . --recipe "recipes/base44.json"
      ```
    - Verify that the script successfully deletes the `base44` directory, removes proprietary dependencies and scripts from `package.json`, renames the project, updates `index.html`, generates `.env.example`, and creates `.migration-status.json`.
 3. **Install Dependencies**:

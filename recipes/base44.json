@@ -1,0 +1,35 @@
+{
+  "name": "base44",
+  "delete_paths": [
+    "base44",
+    "node_modules/@base44",
+    "eject_base44.py",
+    "fetch_data.py",
+    "src/lib/app-params.js"
+  ],
+  "dependencies_to_remove": ["base44"],
+  "scripts_to_remove": ["base44"],
+  "replace_terms": [
+    { "pattern": "base44", "replacement": "standalone" }
+  ],
+  "ast_rules": {
+    "wrappers": ["StandaloneWrapper", "Base44Wrapper"],
+    "db_wrapper": "Base44DB",
+    "db_replacement_import": "import { prisma } from '@/lib/prisma';",
+    "db_replacement_path": "@/lib/prisma",
+    "auth_wrapper": "Base44Auth",
+    "auth_hook": "useBase44User",
+    "auth_replacement_nextjs": {
+      "wrapper": "SessionProvider",
+      "hook": "useSession",
+      "import": "import { SessionProvider, useSession } from 'next-auth/react';",
+      "path": "next-auth/react"
+    },
+    "auth_replacement_spa": {
+      "wrapper": "AuthProvider",
+      "hook": "useAuth",
+      "import": "import { AuthProvider, useAuth } from '@/context/AuthContext';",
+      "path": "@/context/AuthContext"
+    }
+  }
+}

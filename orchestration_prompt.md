@@ -41,9 +41,9 @@ Define and spawn the following sub-agents:
 2. **Run Cleanser**:
    - Execute the global Python converter script on the workspace directory (`.`):
      ```powershell
-     python "C:\Users\igxxg\.gemini\antigravity\scratch\base44-converter\base44-cleanse.py" --dir .
+     python "C:\Users\igxxg\.gemini\antigravity\scratch\base44-converter\decouple-cleanse.py" --dir . --recipe recipes/base44.json
      ```
-   - *Fallback*: If Python is not installed or execution fails, manually delete `base44` directories, remove dependencies referencing `base44` from `package.json`, update `index.html` headers/title, and delete `eject_base44.py`, `fetch_data.py`, and `src/lib/app-params.js`.
+   - *Fallback*: If Python is not installed or execution fails, manually delete directories, remove proprietary dependencies and scripts from `package.json`, update `index.html` headers/title, and delete proprietary files according to the recipe.
 3. **Dependencies**:
    - Run `npm install` (or detect lockfiles for `yarn` / `pnpm`).
    - Confirm that the package installation completes successfully.

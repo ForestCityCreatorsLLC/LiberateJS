@@ -200,7 +200,7 @@ IN NO EVENT SHALL THE AUTHORS, COPYRIGHT HOLDERS, OR DISTRIBUTORS OF THIS SOFTWA
 
 To ensure the codebase migration utility conforms to the legal boundaries described in this report, the development team must execute the following modifications:
 
-1. **Verify Cleanser Exclusions**: Check `base44-cleanse.py` to ensure it permanently deletes all proprietary runtime files, leaving no proprietary source code in the migrated repository.
+1. **Verify Cleanser Exclusions**: Use the recipe-driven `decouple-cleanse.py` engine to ensure it permanently deletes all proprietary runtime files via external configuration recipes, leaving no proprietary source code in the migrated repository.
 2. **Implement User Consent Prompt**: Modify `index.html` (the Dashboard UI) and the command-line entry script to require users to click "I AGREE" to this Legal Disclaimer before saving credentials or launching the scraping sequence.
 3. **Apply Brand Compliance**: Update the repository README and UI headers to replace occurrences of "Base44 Converter" with "Standalone React Converter for Base44 Projects", and add the trademark footnote.
 4. **Audit Session Data Logging**: Ensure no debug statements write passwords or session tokens to standard logs or console outputs.

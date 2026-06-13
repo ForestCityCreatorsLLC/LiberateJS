@@ -12,16 +12,18 @@ Write-Host ""
 $globalConfigDir = "$env:USERPROFILE\.gemini\config\skills\liberatejs"
 $scriptsDir = "$globalConfigDir\scripts"
 $uiDir = "$globalConfigDir\ui"
+$recipesDir = "$globalConfigDir\recipes"
 
 $sourceDir = Get-Item .
 $sourceSkillFile = Join-Path $sourceDir "SKILL.md"
-$sourceScript = Join-Path $sourceDir "base44-cleanse.py"
+$sourceScript = Join-Path $sourceDir "decouple-cleanse.py"
 $sourceLauncher = Join-Path $sourceDir "run-dashboard.bat"
 $sourceUiIndex = Join-Path $sourceDir "ui\index.html"
 $sourceUiStyle = Join-Path $sourceDir "ui\styles.css"
 $sourceUiApp = Join-Path $sourceDir "ui\app.js"
 $sourceUiServer = Join-Path $sourceDir "ui\server.js"
 $sourceAstRewriter = Join-Path $sourceDir "scripts\ast-rewriter.js"
+$sourceRecipes = Join-Path $sourceDir "recipes"
 
 # 2. Dependency Checks
 Write-Host "[1/4] Verifying system dependencies..." -ForegroundColor Yellow
@@ -80,6 +82,9 @@ if (-not (Test-Path $scriptsDir)) {
 if (-not (Test-Path $uiDir)) {
     New-Item -ItemType Directory -Path $uiDir | Out-Null
 }
+if (-not (Test-Path $recipesDir)) {
+    New-Item -ItemType Directory -Path $recipesDir | Out-Null
+}
 Write-Host "  [OK] Global configuration directories created." -ForegroundColor Green
 Write-Host ""
 
@@ -96,8 +101,14 @@ if (Test-Path $sourceSkillFile) {
 
 # Copy Cleansing script
 if (Test-Path $sourceScript) {
-    Copy-Item -Path $sourceScript -Destination (Join-Path $scriptsDir "base44-cleanse.py") -Force
+    Copy-Item -Path $sourceScript -Destination (Join-Path $scriptsDir "decouple-cleanse.py") -Force
     Write-Host "  [OK] Copied cleanser script to global scripts directory." -ForegroundColor Green
+}
+
+# Copy Recipes
+if (Test-Path $sourceRecipes) {
+    Copy-Item -Path "$sourceRecipes\*" -Destination $recipesDir -Recurse -Force
+    Write-Host "  [OK] Copied decoupling recipes to global recipes directory." -ForegroundColor Green
 }
 
 # Copy AST Rewriter script
@@ -125,7 +136,7 @@ Write-Host ""
 # 5. Diagnostic Validation
 Write-Host "[4/4] Running installation diagnostics..." -ForegroundColor Yellow
 $installedSkillPath = Join-Path $globalConfigDir "SKILL.md"
-$installedScriptPath = Join-Path $scriptsDir "base44-cleanse.py"
+$installedScriptPath = Join-Path $scriptsDir "decouple-cleanse.py"
 $installedAstRewriterPath = Join-Path $scriptsDir "ast-rewriter.js"
 $installedUiIndex = Join-Path $uiDir "index.html"
 $installedLauncher = Join-Path $globalConfigDir "run-dashboard.bat"

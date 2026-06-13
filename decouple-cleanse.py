@@ -27,6 +27,25 @@ def log(msg, level="INFO"):
     else:
         print(f"{colors.get(level, '[INFO]')} {msg}")
 
+def load_recipe(recipe_path):
+    if not recipe_path:
+        # Check for default recipes/base44.json relative to script location
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        default_path = os.path.join(script_dir, "recipes", "base44.json")
+        if os.path.exists(default_path):
+            recipe_path = default_path
+        else:
+            log("No recipe specified and default base44.json not found.", "ERROR")
+            sys.exit(1)
+    try:
+        with open(recipe_path, "r", encoding="utf-8") as f:
+            recipe = json.load(f)
+            log(f"Loaded recipe: {recipe.get('name', 'unnamed')}", "SUCCESS")
+            return recipe
+    except Exception as e:
+        log(f"Failed to load recipe from {recipe_path}: {e}", "ERROR")
+        sys.exit(1)
+
 def remove_readonly(func, path, excinfo):
     """OnError helper to clear read-only flag and retry deletions on Windows."""
     os.chmod(path, stat.S_IWRITE)
@@ -322,11 +341,12 @@ def verify_brackets(code):
 
 # ==================== END ACTIVE CODE CHECKERS ====================
 
-def extract_env_variables(project_dir, metadata_summary):
+def extract_env_variables(project_dir, metadata_summary, recipe):
     log("Scanning for configuration keys to map to environment variables...", "INFO")
     env_vars = {}
 
-    config_path = os.path.join(project_dir, "base44", "config.json")
+    recipe_name = recipe.get("name", "base44")
+    config_path = os.path.join(project_dir, recipe_name, "config.json")
     if os.path.exists(config_path):
         try:
             with open(config_path, "r", encoding="utf-8") as f:
@@ -334,9 +354,9 @@ def extract_env_variables(project_dir, metadata_summary):
                 for k, v in config_data.items():
                     env_key = f"VITE_APP_{k.upper()}"
                     env_vars[env_key] = str(v)
-            log(f"Extracted {len(config_data)} keys from base44/config.json", "SUCCESS")
+            log(f"Extracted {len(config_data)} keys from {recipe_name}/config.json", "SUCCESS")
         except Exception as e:
-            log(f"Failed to parse base44/config.json for environment variables: {e}", "WARNING")
+            log(f"Failed to parse {recipe_name}/config.json for environment variables: {e}", "WARNING")
 
     params_path = os.path.join(project_dir, "src", "lib", "app-params.js")
     if os.path.exists(params_path):
@@ -357,7 +377,7 @@ def extract_env_variables(project_dir, metadata_summary):
         env_example_path = os.path.join(project_dir, ".env.example")
         try:
             with open(env_example_path, "w", encoding="utf-8") as f:
-                f.write("# Environment variables migrated from Base44 configurations\n")
+                f.write(f"# Environment variables migrated from {recipe_name.capitalize()} configurations\n")
                 f.write("# Rename this file to .env to use locally\n\n")
                 for k in sorted(env_vars.keys()):
                     # Secure key leak mitigation: do not write secret keys to default configs
@@ -370,7 +390,7 @@ def extract_env_variables(project_dir, metadata_summary):
     else:
         log("No proprietary configuration variables detected for environment mapping.", "INFO")
 
-def cleanse_package_json(project_dir, new_name=None, dry_run=False, metadata_summary=None):
+def cleanse_package_json(project_dir, new_name=None, dry_run=False, metadata_summary=None, recipe=None):
     pkg_path = os.path.join(project_dir, "package.json")
     if not os.path.exists(pkg_path):
         log("No package.json found. Skipping package.json updates.", "WARNING")
@@ -385,10 +405,11 @@ def cleanse_package_json(project_dir, new_name=None, dry_run=False, metadata_sum
 
     modified = False
 
+    recipe_name = recipe.get("name", "base44")
     current_name = data.get("name", "")
     metadata_summary["original_project_name"] = current_name
-    if "base44" in current_name.lower():
-        name_to_use = new_name if new_name else current_name.lower().replace("base44", "app").strip("-")
+    if recipe_name.lower() in current_name.lower():
+        name_to_use = new_name if new_name else current_name.lower().replace(recipe_name.lower(), "app").strip("-")
         metadata_summary["new_project_name"] = name_to_use
         if dry_run:
             log(f"Would rename project in package.json from '{current_name}' to '{name_to_use}'", "INFO")
@@ -399,10 +420,11 @@ def cleanse_package_json(project_dir, new_name=None, dry_run=False, metadata_sum
     else:
         metadata_summary["new_project_name"] = current_name
 
+    remove_deps = recipe.get("dependencies_to_remove", [recipe_name])
     for dep_type in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]:
         if dep_type in data:
             deps = data[dep_type]
-            to_remove = [k for k in deps.keys() if "base44" in k.lower()]
+            to_remove = [k for k in deps.keys() if any(rd.lower() in k.lower() for rd in remove_deps)]
             if to_remove:
                 for k in to_remove:
                     metadata_summary["removed_dependencies"].append(k)
@@ -413,9 +435,10 @@ def cleanse_package_json(project_dir, new_name=None, dry_run=False, metadata_sum
                         log(f"Removed {dep_type} dependency: {k}", "SUCCESS")
                 modified = True
 
+    remove_scripts = recipe.get("scripts_to_remove", [recipe_name])
     if "scripts" in data:
         scripts = data["scripts"]
-        to_remove = [k for k, v in scripts.items() if "base44" in k.lower() or "base44" in v.lower()]
+        to_remove = [k for k, v in scripts.items() if any(rs.lower() in k.lower() or rs.lower() in v.lower() for rs in remove_scripts)]
         if to_remove:
             for k in to_remove:
                 metadata_summary["removed_scripts"].append(k)
@@ -435,7 +458,7 @@ def cleanse_package_json(project_dir, new_name=None, dry_run=False, metadata_sum
         except Exception as e:
             log(f"Failed to write package.json: {e}", "ERROR")
 
-def cleanse_html(project_dir, dry_run=False, metadata_summary=None):
+def cleanse_html(project_dir, dry_run=False, metadata_summary=None, recipe=None):
     html_path = os.path.join(project_dir, "index.html")
     if not os.path.exists(html_path):
         log("No index.html found. Skipping HTML cleansing.", "WARNING")
@@ -450,11 +473,20 @@ def cleanse_html(project_dir, dry_run=False, metadata_summary=None):
 
     modified = False
 
+    replace_terms = recipe.get("replace_terms", [{"pattern": "base44", "replacement": "standalone"}])
+
     title_match = re.search(r"<title>(.*?)</title>", content, re.IGNORECASE)
     if title_match:
         title_text = title_match.group(1)
-        if "base44" in title_text.lower():
-            new_title = title_text.lower().replace("base44", "").strip(" -_")
+        new_title = title_text
+        has_replaced = False
+        for term in replace_terms:
+            pat = term.get("pattern", "base44")
+            repl = term.get("replacement", "standalone")
+            if re.search(pat, new_title, re.IGNORECASE):
+                new_title = re.sub(pat, repl, new_title, flags=re.IGNORECASE)
+                has_replaced = True
+        if has_replaced:
             # Capitalize words
             new_title = " ".join([w.capitalize() for w in new_title.split()])
             if not new_title:
@@ -470,14 +502,16 @@ def cleanse_html(project_dir, dry_run=False, metadata_summary=None):
                 log(f"Updated HTML title to '{new_title}'", "SUCCESS")
             modified = True
 
-    link_matches = re.findall(r"(<link[^>]*?href=[^>]*?base44[^>]*?>)", content, re.IGNORECASE)
-    for link in link_matches:
-        if dry_run:
-            log(f"Would remove base44 link/favicon tag: {link.strip()}", "INFO")
-        else:
-            content = content.replace(link, "")
-            log("Removed base44 link/favicon reference from index.html", "SUCCESS")
-        modified = True
+    for term in replace_terms:
+        pat = term.get("pattern", "base44")
+        link_matches = re.findall(rf"(<link[^>]*?href=[^>]*?{pat}[^>]*?>)", content, re.IGNORECASE)
+        for link in link_matches:
+            if dry_run:
+                log(f"Would remove {pat} link/favicon tag: {link.strip()}", "INFO")
+            else:
+                content = content.replace(link, "")
+                log(f"Removed {pat} link/favicon reference from index.html", "SUCCESS")
+            modified = True
 
     if modified and not dry_run:
         try:
@@ -488,22 +522,32 @@ def cleanse_html(project_dir, dry_run=False, metadata_summary=None):
         except Exception as e:
             log(f"Failed to write index.html: {e}", "ERROR")
 
-def deep_search_and_replace(project_dir, dry_run=False, metadata_summary=None):
-    log("Starting global search-and-replace for 'base44'...", "INFO")
+def deep_search_and_replace(project_dir, dry_run=False, metadata_summary=None, recipe=None):
+    recipe_name = recipe.get("name", "base44")
+    replace_terms = recipe.get("replace_terms", [{"pattern": "base44", "replacement": "standalone"}])
+    log(f"Starting global search-and-replace using recipe: {recipe_name}...", "INFO")
     
     exclude_dirs = {".git", "node_modules", "dist", "build", ".next", ".cache", ".idea", ".vscode"}
-    exclude_files = {"package-lock.json", "yarn.lock", "pnpm-lock.yaml", "base44-cleanse.py", ".migration-status.json"}
+    exclude_files = {"package-lock.json", "yarn.lock", "pnpm-lock.yaml", "decouple-cleanse.py", "base44-cleanse.py", ".migration-status.json"}
 
-    pattern = re.compile(r"base44", re.IGNORECASE)
-
-    def case_preserving_replace(match):
-        val = match.group(0)
-        if val.isupper():
-            return "STANDALONE"
-        elif val.istitle():
-            return "Standalone"
-        else:
-            return "standalone"
+    replacement_rules = []
+    for term in replace_terms:
+        pat = term.get("pattern", "base44")
+        repl = term.get("replacement", "standalone")
+        pattern = re.compile(pat, re.IGNORECASE)
+        
+        def get_replacer(r_val):
+            def case_preserving_replace(match):
+                val = match.group(0)
+                if val.isupper():
+                    return r_val.upper()
+                elif val.istitle():
+                    return r_val.capitalize()
+                else:
+                    return r_val.lower()
+            return case_preserving_replace
+            
+        replacement_rules.append((pattern, get_replacer(repl)))
 
     count = 0
     file_count = 0
@@ -531,20 +575,25 @@ def deep_search_and_replace(project_dir, dry_run=False, metadata_summary=None):
             except OSError:
                 continue
 
-            if pattern.search(content):
+            has_match = False
+            new_content = content
+            for pattern, replacer in replacement_rules:
+                if pattern.search(new_content):
+                    matches = len(pattern.findall(new_content))
+                    count += matches
+                    new_content = pattern.sub(replacer, new_content)
+                    has_match = True
+
+            if has_match:
                 file_count += 1
-                matches = len(pattern.findall(content))
-                count += matches
-                
                 if dry_run:
-                    log(f"Would clean {matches} occurrences of 'base44' in: {rel_path}", "INFO")
+                    log(f"Would clean occurrences in: {rel_path}", "INFO")
                 else:
-                    new_content = pattern.sub(case_preserving_replace, content)
                     try:
                         with open(file_path, "w", encoding="utf-8") as f:
                             f.write(new_content)
                         metadata_summary["modified_files"].append(rel_path)
-                        log(f"Replaced {matches} occurrences of 'base44' in: {rel_path}", "SUCCESS")
+                        log(f"Replaced occurrences in: {rel_path}", "SUCCESS")
                     except Exception as e:
                         log(f"Error writing to {file_path}: {e}", "ERROR")
 
@@ -975,15 +1024,21 @@ module.exports = {
             log(f"Failed to add bundle optimization to vite.config.js: {e}", "ERROR")
 
 def main():
-    parser = argparse.ArgumentParser(description="Cleanse a repository of all base44 traces.")
+    parser = argparse.ArgumentParser(description="Cleanse a repository of all proprietary traces.")
     parser.add_argument("--dir", default=".", help="Target directory (default: current directory)")
     parser.add_argument("--rename", help="New name for the project in package.json")
     parser.add_argument("--dry-run", action="store_true", help="Perform a dry run without modifying files")
+    parser.add_argument("--recipe", help="Path to the JSON recipe file")
     
     args = parser.parse_args()
     
     target_dir = os.path.abspath(args.dir)
-    log(f"Starting Base44 cleanup in: {target_dir}")
+    
+    # Load recipe configuration
+    recipe = load_recipe(args.recipe)
+    recipe_name = recipe.get("name", "decouple")
+    
+    log(f"Starting {recipe_name} cleanup in: {target_dir}")
     if args.dry_run:
         log("DRY RUN MODE ENABLED - No changes will be saved", "WARNING")
 
@@ -1003,16 +1058,10 @@ def main():
     }
 
     # Extract configs in dry run too for output logging visibility
-    extract_env_variables(target_dir, metadata_summary)
+    extract_env_variables(target_dir, metadata_summary, recipe)
 
-    log("Step 1: Deleting base44 folders...", "INFO")
-    paths_to_delete = [
-        os.path.join(target_dir, "base44"),
-        os.path.join(target_dir, "node_modules", "@base44"),
-        os.path.join(target_dir, "eject_base44.py"),
-        os.path.join(target_dir, "fetch_data.py"),
-        os.path.join(target_dir, "src", "lib", "app-params.js")
-    ]
+    log(f"Step 1: Deleting {recipe_name} folders...", "INFO")
+    paths_to_delete = [os.path.join(target_dir, p) for p in recipe.get("delete_paths", [])]
     for p in paths_to_delete:
         rel_p = os.path.relpath(p, target_dir)
         deleted = delete_path(p, dry_run=args.dry_run)
@@ -1020,13 +1069,13 @@ def main():
             metadata_summary["deleted_files_and_directories"].append(rel_p)
 
     log("Step 2: Cleaning package.json...", "INFO")
-    cleanse_package_json(target_dir, new_name=args.rename, dry_run=args.dry_run, metadata_summary=metadata_summary)
+    cleanse_package_json(target_dir, new_name=args.rename, dry_run=args.dry_run, metadata_summary=metadata_summary, recipe=recipe)
 
     log("Step 3: Cleaning index.html...", "INFO")
-    cleanse_html(target_dir, dry_run=args.dry_run, metadata_summary=metadata_summary)
+    cleanse_html(target_dir, dry_run=args.dry_run, metadata_summary=metadata_summary, recipe=recipe)
 
     log("Step 4: Running global case-preserving replacement...", "INFO")
-    deep_search_and_replace(target_dir, dry_run=args.dry_run, metadata_summary=metadata_summary)
+    deep_search_and_replace(target_dir, dry_run=args.dry_run, metadata_summary=metadata_summary, recipe=recipe)
 
     log("Step 4.5: Writing framework configuration file...", "INFO")
     framework = detect_framework(target_dir)
@@ -1051,7 +1100,7 @@ def main():
     log("Step 5: Re-installing dependencies...", "INFO")
     run_npm_install(target_dir, dry_run=args.dry_run)
 
-    log("Base44 Converter CLI phase complete. Standalone project is ready for AI re-wiring and enhancement!", "SUCCESS")
+    log(f"{recipe_name.capitalize()} Decoupling CLI phase complete. Standalone project is ready for AI re-wiring and enhancement!", "SUCCESS")
 
 if __name__ == "__main__":
     main()

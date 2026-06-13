@@ -27,7 +27,7 @@ Before running LiberateJS, ensure your local workstation has the following syste
 
 ### ⚙️ System Dependencies
 *   **Node.js (v18.0.0+)**: Required to run the local dashboard bridge server (`ui/server.js`) and build the decoupled React application (e.g., executing `npm install` and `npm run dev`).
-*   **Python (v3.8+)**: Required to run the automated cleanser script (`base44-cleanse.py`) which parses directories, cleanses proprietary code, and outputs a standard structure.
+*   **Python (v3.8+)**: Required to run the automated cleanser script (`decouple-cleanse.py`) which parses directories, cleanses proprietary code using customizable recipes, and outputs a standard structure.
 *   **Git**: Required for initializing version control in the migrated workspace and staging the new codebase.
 *   **GitHub CLI (`gh`)** *(Optional but recommended)*: Highly recommended to automate GitHub repository provisioning and push directly from the migration pipeline.
 
@@ -64,12 +64,13 @@ If you prefer to operate directly from the terminal without the visual dashboard
 #### 1. Running the Cleanse Script Directly
 Navigate to the directory of the project to cleanse, and run:
 ```powershell
-python path/to/base44-cleanse.py --dir . --rename "my-standalone-app"
+python path/to/decouple-cleanse.py --dir . --rename "my-standalone-app" --recipe path/to/recipe.json
 ```
 
 **Supported Options:**
-*   `--dir`: The target project folder directory containing the Base44 app (default: `.`).
+*   `--dir`: The target project folder directory containing the app to decouple (default: `.`).
 *   `--rename`: Sets the new name for the project in `package.json` (e.g., updates metadata).
+*   `--recipe`: Path to the JSON recipe file (e.g., `recipes/base44.json`) defining the file deletion paths, package renaming, and string replacements.
 *   `--dry-run`: Runs checks and lists files to modify/delete without writing changes.
 
 #### 2. Running using the `npx` Wrapper

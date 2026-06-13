@@ -534,17 +534,18 @@ const server = http.createServer((req, res) => {
         res.write(`data: ${JSON.stringify({ step: 'ingest', status: 'success' })}\n\n`);
       }
 
-      // Step 2: Cleanse (Run base44-cleanse.py)
-      sendLog('Step 2: Executing Python cleansing script base44-cleanse.py...', 'info');
+      // Step 2: Cleanse (Run decouple-cleanse.py)
+      sendLog('Step 2: Executing Python cleansing script decouple-cleanse.py...', 'info');
       
-      let scriptPath = path.join(__dirname, '..', 'scripts', 'base44-cleanse.py');
+      let scriptPath = path.join(__dirname, '..', 'scripts', 'decouple-cleanse.py');
       if (!fs.existsSync(scriptPath)) {
-        scriptPath = path.join(__dirname, '..', 'base44-cleanse.py');
+        scriptPath = path.join(__dirname, '..', 'decouple-cleanse.py');
       }
       
       let cleanseHandled = false;
       try {
-        cleanseProc = spawn('python', [scriptPath, '--dir', targetDir, '--rename', repoName]);
+        const recipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
+        cleanseProc = spawn('python', [scriptPath, '--dir', targetDir, '--rename', repoName, '--recipe', recipePath]);
       } catch (err) {
         cleanseHandled = true;
         sendLog(`[ERROR] Failed to spawn Python process: ${err.message}. Ensure Python is installed and in your PATH.`, 'error');
@@ -623,10 +624,11 @@ const server = http.createServer((req, res) => {
         sendLog('Step 3: Rewiring router layouts and state adapters using AST rewriter...', 'info');
         setTimeout(() => {
           const rewriterPath = path.join(__dirname, '..', 'scripts', 'ast-rewriter.js');
-          sendLog(`Running AST rewriter: node "${rewriterPath}" "${targetDir}"`, 'info');
+          const recipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
+          sendLog(`Running AST rewriter: node "${rewriterPath}" "${targetDir}" --recipe="${recipePath}"`, 'info');
           
           try {
-            const rewriterOutput = execSync(`node "${rewriterPath}" "${targetDir}" --verbose`, { encoding: 'utf8' });
+            const rewriterOutput = execSync(`node "${rewriterPath}" "${targetDir}" --recipe="${recipePath}" --verbose`, { encoding: 'utf8' });
             const lines = rewriterOutput.split('\n');
             lines.forEach(line => {
               if (line.trim()) {
