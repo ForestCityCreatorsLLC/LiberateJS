@@ -41,7 +41,7 @@ When this skill is activated, you must act as the **Orchestrator** and delegate 
    - **Download**: Once selected, download the project files directly into the active workspace directory.
     - Run the automated Node.js cleanser script on the active workspace:
       ```powershell
-      node "C:\Users\igxxg\.gemini\config\skills\liberatejs\bin\liberate.js" --src . --recipe "recipes/base44.json"
+      node "C:\Users\igxxg\.gemini\config\skills\liberatejs\bin\liberate.js" --src . --recipe "recipes/standalone.json"
       ```
    - Verify that the script successfully deletes proprietary paths, removes dependencies and scripts from `package.json`, renames the project, updates `index.html`, generates `.env.example`, and creates `.migration-status.json`.
 3. **Install Dependencies**:

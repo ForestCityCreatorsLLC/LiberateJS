@@ -10,7 +10,7 @@ export function AppLayout({ children }) {
             <span className="brand-name">Standalone App</span>
           </div>
           <div className="nav-links">
-            <a href="#dashboard" className="nav-link active">Dashboard</a>
+            <a href="#modern-dashboard" className="nav-link active">Dashboard</a>
             <a href="#settings" className="nav-link">Settings</a>
             <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="nav-link">GitHub</a>
           </div>

@@ -1,6 +1,6 @@
 # ⚡ LiberateJS Installation & Onboarding Guide
 
-Welcome to **LiberateJS**! This developer utility allows you to decouple and migrate web applications from proprietary Base44 ecosystems into standard, standalone React and Node.js codebases.
+Welcome to **LiberateJS**! This developer utility allows you to decouple and migrate web applications from proprietary Standalone ecosystems into standard, standalone React and Node.js codebases.
 
 This guide covers everything you need to set up LiberateJS, run it locally, navigate the visual dashboard (with live logs and code diffs), and troubleshoot common errors.
 
@@ -31,7 +31,7 @@ Before running LiberateJS, ensure your local workstation has the following syste
 *   **GitHub CLI (`gh`)** *(Optional but recommended)*: Highly recommended to automate GitHub repository provisioning and push directly from the migration pipeline.
 
 ### 🔑 Authentication Credentials
-*   **Base44 Credentials**: Your platform login email (`BASE44_EMAIL`) and password (`BASE44_PASSWORD`).
+*   **Standalone Credentials**: Your platform login email (`STANDALONE_EMAIL`) and password (`STANDALONE_PASSWORD`).
 *   **GitHub Personal Access Token (PAT)**: A GitHub PAT with `repo` scopes. This is required to push the migrated project if your local Git client is not authenticated with the GitHub CLI.
 
 ---
@@ -70,7 +70,7 @@ node path/to/bin/liberate.js --src . --rename "my-standalone-app" --recipe path/
 *   `-s, --src <path>`: The target source project folder containing the app to decouple (default: `.`).
 *   `-d, --dest <path>`: The destination folder where the clean app should be created (leaves source untouched if different).
 *   `-n, --rename <name>`: Sets the new name for the project in `package.json` (e.g., updates metadata).
-*   `-r, --recipe <path>`: Path to the JSON recipe file (e.g., `recipes/base44.json`) defining the file deletion paths, package renaming, and string replacements.
+*   `-r, --recipe <path>`: Path to the JSON recipe file (e.g., `recipes/standalone.json`) defining the file deletion paths, package renaming, and string replacements.
 *   `--stage <cleanse|rewrite|all>`: Run specific pipeline stages (default: `all`).
 *   `--dry-run`: Runs checks and lists files to modify/delete without writing changes.
 *   `-v, --verbose`: Enable detailed logs.
@@ -102,7 +102,7 @@ The dashboard guides you through the migration lifecycle in five steps:
 ```mermaid
 graph TD
     A[0. Legal Consent Gate] --> B[1. Authentication & API Config]
-    B --> C[2. Select Base44 Project]
+    B --> C[2. Select Standalone Project]
     C --> D[3. Run Pipeline with Live Console]
     D --> E[4. Inspect Code Diffs & Deploy]
 ```
@@ -113,19 +113,19 @@ graph TD
 *   *Note: Phase 1 (Credentials Setup) remains locked and blurred out until this consent is explicitly checked.*
 
 ### Phase 1: Credentials Setup
-*   **Base44 Login**: Enter your platform email and password. Click **Save & Verify Base44**. This triggers an authentication request to load your profile.
+*   **Standalone Login**: Enter your platform email and password. Click **Save & Verify Standalone**. This triggers an authentication request to load your profile.
 *   **GitHub Auth**: Enter your PAT token and default git name/email. Click **Save & Verify GitHub**.
 *   *Note: These details are securely stored in your browser's local storage and passed locally to the bridge server config API.*
 
 ### Phase 2: Project Selection
-*   Once Base44 is connected, the **Available Projects** dropdown unlocks.
+*   Once Standalone is connected, the **Available Projects** dropdown unlocks.
 *   The dashboard fetches your active cloud projects. Select the repository you want to liberate.
 
 ### Phase 3: Live Progress Console
 Click **Start Conversion** to trigger the pipeline. You will see a live progress bar tracking five distinct migration phases:
 1.  **Ingesting Project Code** (Downloads/Scrapes the source project files).
-2.  **Stripping Base44 Metadata** (Deletes the `base44/` folder, removes proprietary dependencies from `package.json`).
-3.  **Reworking Code & Style Adapters** (Removes wrappers like `<Base44Wrapper>`, rewires routers, sets up custom CSS/Google Fonts).
+2.  **Stripping Standalone Metadata** (Deletes the `standalone/` folder, removes proprietary dependencies from `package.json`).
+3.  **Reworking Code & Style Adapters** (Removes wrappers like `<StandaloneWrapper>`, rewires routers, sets up custom CSS/Google Fonts).
 4.  **QA Build & CI/CD** (Executes `npm run build` and sets up GitHub Actions build workflows).
 5.  **Git Init & GitHub Push** (Initializes git, creates a remote repo, and pushes codebase).
 

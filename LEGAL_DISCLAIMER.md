@@ -1,18 +1,18 @@
 # Legal Risk Analysis & Compliance Framework
-## Base44 Codebase Migration Utility (Standalone App Converter)
+## Standalone Codebase Migration Utility (Standalone App Converter)
 
 > [!IMPORTANT]
-> **LEGAL PRIVILEGE & DISCLAIMER:** This document compiles a professional legal risk assessment and compliance framework for the development and distribution of the Base44 Standalone App Converter. It is intended for informational and development compliance purposes and does not constitute formal legal advice. Consultation with qualified intellectual property counsel is recommended prior to commercial release.
+> **LEGAL PRIVILEGE & DISCLAIMER:** This document compiles a professional legal risk assessment and compliance framework for the development and distribution of the Standalone Standalone App Converter. It is intended for informational and development compliance purposes and does not constitute formal legal advice. Consultation with qualified intellectual property counsel is recommended prior to commercial release.
 
 ---
 
 ## Executive Summary
 
-The **Base44 Standalone App Converter** (the "Utility") is an automated pipeline designed to help users migrate their proprietary low-code/no-code web applications hosted on the Base44 platform into standalone, standard React/Node.js codebases. The utility operates by:
-1. Programmatically logging into the Base44 platform using user-supplied, authorized credentials.
+The **Standalone Standalone App Converter** (the "Utility") is an automated pipeline designed to help users migrate their proprietary low-code/no-code web applications hosted on the Standalone platform into standalone, standard React/Node.js codebases. The utility operates by:
+1. Programmatically logging into the Standalone platform using user-supplied, authorized credentials.
 2. Ingesting (scraping) the user's own codebase, configuration files, and database schemas.
-3. Cleansing proprietary Base44 wrappers and runtime code.
-4. Injecting open-source adapters (such as `react-router-dom` and standard state hooks) to restore application functionality outside the Base44 hosting environment.
+3. Cleansing proprietary Standalone wrappers and runtime code.
+4. Injecting open-source adapters (such as `react-router-dom` and standard state hooks) to restore application functionality outside the Standalone hosting environment.
 5. Pushing the resulting codebase to a Git repository owned by the user.
 
 This document conducts a rigorous legal analysis of the utility's operation, addressing statutory and common-law risks under U.S. law, reviewing critical judicial precedents, defining compliance boundaries, and providing a model user-facing legal disclaimer and safety guidelines document.
@@ -22,7 +22,7 @@ This document conducts a rigorous legal analysis of the utility's operation, add
 ## Section 1: Credential-Based Access and Session Security
 
 ### 1.1 Ingestion Mechanism & Authorization
-The utility executes locally on the user's machine. It requires the user to supply their own credentials (`BASE44_EMAIL` and `BASE44_PASSWORD`) or a pre-authenticated session cookie. Using browser automation (Puppeteer/Playwright or similar), the utility logs into `https://base44.io/login` on behalf of the user, accesses their account dashboard, and downloads the application files associated with the user's specific account.
+The utility executes locally on the user's machine. It requires the user to supply their own credentials (`STANDALONE_EMAIL` and `STANDALONE_PASSWORD`) or a pre-authenticated session cookie. Using browser automation (Puppeteer/Playwright or similar), the utility logs into `https://standalone.io/login` on behalf of the user, accesses their account dashboard, and downloads the application files associated with the user's specific account.
 
 ### 1.2 Statutory Analysis: CFAA & SCA
 
@@ -40,7 +40,7 @@ The SCA makes it an offense to intentionally access without authorization a faci
 > [!WARNING]
 > **Credential Security**: Storing user passwords in plaintext or sending them to a third-party server represents a severe security and liability risk. If credentials are leaked, the utility developers could face negligence claims.
 
-* **Guardrail 1 (Local Processing Only)**: The utility must run entirely client-side. Credentials must never be transmitted, cached, or logged to any server owned by the utility developers. All network requests to the Base44 platform must originate from the user's local IP address.
+* **Guardrail 1 (Local Processing Only)**: The utility must run entirely client-side. Credentials must never be transmitted, cached, or logged to any server owned by the utility developers. All network requests to the Standalone platform must originate from the user's local IP address.
 * **Guardrail 2 (Session-Only Memory)**: Credentials should be stored in volatile memory during execution or read from a local `.env` file that is explicitly added to `.gitignore`.
 * **Guardrail 3 (No Multi-Tenant Scraping)**: The utility must enforce strict project isolation. The scraping script must only pull projects associated with the logged-in session's account and must not accept arbitrary resource IDs that belong to other tenants.
 
@@ -48,13 +48,13 @@ The SCA makes it an offense to intentionally access without authorization a faci
 
 ## Section 2: Interoperability, Reverse Engineering, and Key Legal Precedents
 
-To function as a clean React/Node.js application, the output codebase must remove proprietary Base44 modules and replace them with standard open-source library adapters (e.g., mapping `<Base44Wrapper>` to standard React routing). This conversion requires reverse engineering the functional interfaces of the Base44 wrappers.
+To function as a clean React/Node.js application, the output codebase must remove proprietary Standalone modules and replace them with standard open-source library adapters (e.g., mapping `<StandaloneWrapper>` to standard React routing). This conversion requires reverse engineering the functional interfaces of the Standalone wrappers.
 
 The legality of this process is governed by three major U.S. Supreme Court and Appellate precedents:
 
 ```mermaid
 graph TD
-    A[Base44 Migration Utility] --> B(Sega v. Accolade)
+    A[Standalone Migration Utility] --> B(Sega v. Accolade)
     A --> C(hiQ v. LinkedIn)
     A --> D(Van Buren v. US)
     
@@ -67,23 +67,23 @@ graph TD
 
 | Precedent | Relevant Legal Holding | Direct Application to the Utility | Risk Mitigation Strategy |
 | :--- | :--- | :--- | :--- |
-| **Sega Enterprises Ltd. v. Accolade, Inc.**, 977 F.2d 1510 (9th Cir. 1992) | Disassembly and reverse engineering of copyrighted software is **Fair Use** under 17 U.S.C. § 107 if it is the only way to access functional interface specifications necessary to create an interoperable program. | The utility dissects proprietary wrapper files to understand how they bind states and routes. Under *Sega*, translating these wrapper calls into standard React equivalents to achieve interoperability (running outside Base44) is protected. | **Excision, Not Duplication**: Do not copy Base44's actual wrapper implementation code. The utility must only map inputs and outputs of the wrapper to open-source components. |
-| **hiQ Labs, Inc. v. LinkedIn Corp.**, 31 F.4th 1180 (9th Cir. 2022) | Scraping data that is publicly available on the web does not violate the CFAA because public data is not protected by an authorization gate. | Base44 projects are behind an authentication wall, so *hiQ*'s "public data" shield does not apply. Access is governed by private account permissions. | **Explicit Consent**: Rely on the user's explicit credential input as authorization. Never attempt to scrape or access any project that is not explicitly unlocked by the user's valid login session. |
-| **Van Buren v. United States**, 141 S. Ct. 1648 (2021) | Under the CFAA, "exceeding authorized access" applies only to accessing information one is forbidden from accessing (a "gates down" approach). Violating a policy or Terms of Service regarding *how* data is accessed does not violate the CFAA if the user is authorized to view that data. | Even if Base44's Terms of Service forbid automated scraping or exporting, a user utilizing the utility to access their own code does not commit a federal crime under the CFAA, as they are authorized to access that code. | **Maintain Authorization**: The utility must never attempt to bypass account permissions, access admin panels, or extract system code that the user does not have permission to view. |
+| **Sega Enterprises Ltd. v. Accolade, Inc.**, 977 F.2d 1510 (9th Cir. 1992) | Disassembly and reverse engineering of copyrighted software is **Fair Use** under 17 U.S.C. § 107 if it is the only way to access functional interface specifications necessary to create an interoperable program. | The utility dissects proprietary wrapper files to understand how they bind states and routes. Under *Sega*, translating these wrapper calls into standard React equivalents to achieve interoperability (running outside Standalone) is protected. | **Excision, Not Duplication**: Do not copy Standalone's actual wrapper implementation code. The utility must only map inputs and outputs of the wrapper to open-source components. |
+| **hiQ Labs, Inc. v. LinkedIn Corp.**, 31 F.4th 1180 (9th Cir. 2022) | Scraping data that is publicly available on the web does not violate the CFAA because public data is not protected by an authorization gate. | Standalone projects are behind an authentication wall, so *hiQ*'s "public data" shield does not apply. Access is governed by private account permissions. | **Explicit Consent**: Rely on the user's explicit credential input as authorization. Never attempt to scrape or access any project that is not explicitly unlocked by the user's valid login session. |
+| **Van Buren v. United States**, 141 S. Ct. 1648 (2021) | Under the CFAA, "exceeding authorized access" applies only to accessing information one is forbidden from accessing (a "gates down" approach). Violating a policy or Terms of Service regarding *how* data is accessed does not violate the CFAA if the user is authorized to view that data. | Even if Standalone's Terms of Service forbid automated scraping or exporting, a user utilizing the utility to access their own code does not commit a federal crime under the CFAA, as they are authorized to access that code. | **Maintain Authorization**: The utility must never attempt to bypass account permissions, access admin panels, or extract system code that the user does not have permission to view. |
 
 ### 2.2 Functional vs. Expressive Code
 Under 17 U.S.C. § 102(b), copyright protection does not extend to any "idea, procedure, process, system, method of operation, concept, principle, or discovery." 
-* **Expressive Code**: The literal code written by Base44 developers to run their platform or render wrappers (e.g., custom hooks, proprietary state-machines). This is protected by copyright.
+* **Expressive Code**: The literal code written by Standalone developers to run their platform or render wrappers (e.g., custom hooks, proprietary state-machines). This is protected by copyright.
 * **Functional Code**: The names, arguments, and schemas of the APIs/wrappers that the user's custom application code calls to operate. This is functional interface information.
 
-**Rule of Law**: The utility must strictly limit its operations to reading functional parameters (like component names, props, and configurations) and converting them. It must **never** bundle, clone, or redistribute any of Base44's proprietary libraries, styling frameworks, or server-side packages.
+**Rule of Law**: The utility must strictly limit its operations to reading functional parameters (like component names, props, and configurations) and converting them. It must **never** bundle, clone, or redistribute any of Standalone's proprietary libraries, styling frameworks, or server-side packages.
 
 ---
 
 ## Section 3: Terms of Service (ToS) Conflicts & Safety Boundaries
 
 ### 3.1 Typical EULA/ToS Restrictions
-Base44's Terms of Service (or End User License Agreement) likely contain clauses that:
+Standalone's Terms of Service (or End User License Agreement) likely contain clauses that:
 1. Prohibit the use of web crawlers, scrapers, indexers, or automated scripts.
 2. Restrict the export of compiled assets or raw application files.
 3. Assert that application components created on the platform must run exclusively on the platform's infrastructure.
@@ -91,8 +91,8 @@ Base44's Terms of Service (or End User License Agreement) likely contain clauses
 ### 3.2 Breach of Contract & Tortious Interference Risks
 While *Van Buren* protects the user and the utility developers from criminal CFAA liability, the platform may still pursue civil claims for breach of contract against the user, or claims of **Tortious Interference with Contract** against the developers of the utility.
 
-* **Breach of Contract (User-side)**: A user running the utility is likely in breach of the platform's ToS. This gives Base44 the contractual right to terminate the user's account, delete their projects, and blacklist their IP address.
-* **Tortious Interference (Developer-side)**: If the utility developers actively market the tool as a mechanism to bypass Base44 contracts, they could be sued for encouraging third parties to breach their contracts.
+* **Breach of Contract (User-side)**: A user running the utility is likely in breach of the platform's ToS. This gives Standalone the contractual right to terminate the user's account, delete their projects, and blacklist their IP address.
+* **Tortious Interference (Developer-side)**: If the utility developers actively market the tool as a mechanism to bypass Standalone contracts, they could be sued for encouraging third parties to breach their contracts.
 
 ### 3.3 Safety Boundaries & Technical Guardrails
 
@@ -105,14 +105,14 @@ To minimize ToS conflict risks, the utility must enforce the following safety bo
    * Implement randomized delays (1000ms - 3000ms) between page loads and asset downloads.
    * Set realistic user-agent strings matching modern browsers (e.g., Chrome/Edge on Windows/macOS).
    * Do not run headless chrome if it triggers the platform's Cloudflare/WAF block page.
-2. **Local Excision, Not Platform Manipulation**: The utility must only *read* code. It must never execute write operations on the Base44 server (e.g., deleting projects, modifying database tables, or altering billing details).
-3. **No Commercial Wrapper Hosting**: The utility must not set up a competing hosting service that uses modified Base44 runtime components. The output must compile to a standard React/Node template hosted on the user's own servers/GitHub.
+2. **Local Excision, Not Platform Manipulation**: The utility must only *read* code. It must never execute write operations on the Standalone server (e.g., deleting projects, modifying database tables, or altering billing details).
+3. **No Commercial Wrapper Hosting**: The utility must not set up a competing hosting service that uses modified Standalone runtime components. The output must compile to a standard React/Node template hosted on the user's own servers/GitHub.
 
 ---
 
 ## Section 4: Nominative Fair Use and Trademark Strategy
 
-The utility must reference the trademark "Base44" to describe what it does (e.g., "migrates from Base44 to React"). However, unauthorized use of a trademark can result in claims of **trademark infringement**, **dilution**, or **false designation of origin** under the Lanham Act (15 U.S.C. § 1114/1125).
+The utility must reference the trademark "Standalone" to describe what it does (e.g., "migrates from Standalone to React"). However, unauthorized use of a trademark can result in claims of **trademark infringement**, **dilution**, or **false designation of origin** under the Lanham Act (15 U.S.C. § 1114/1125).
 
 ### 4.1 The Nominative Fair Use Doctrine
 Under U.S. trademark law, the "Nominative Fair Use" defense allows the use of another's trademark to identify the trademark owner's product, provided three requirements are met:
@@ -132,16 +132,16 @@ Under U.S. trademark law, the "Nominative Fair Use" defense allows the use of an
  └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-1. **Necessity**: The product or service must not be readily identifiable without use of the trademark. (The utility cannot describe its conversion capability without naming "Base44").
-2. **Minimalism**: Only so much of the mark may be used as is reasonably necessary to identify the product or service. (The utility should only use the text "Base44" and never copy the official logo, graphics, design theme, or typography).
+1. **Necessity**: The product or service must not be readily identifiable without use of the trademark. (The utility cannot describe its conversion capability without naming "Standalone").
+2. **Minimalism**: Only so much of the mark may be used as is reasonably necessary to identify the product or service. (The utility should only use the text "Standalone" and never copy the official logo, graphics, design theme, or typography).
 3. **No False Endorsement**: The user must do nothing that would suggest sponsorship or endorsement by the trademark holder.
 
 ### 4.2 Brand & UI Compliance Rules
 
-* **Rule 1 (Descriptive Naming)**: The utility must not be named "Base44 Converter" or "Base44 React Utility." It must be named descriptively, highlighting the independent nature of the tool: e.g., **"Standalone React Converter for Base44 Applications"** or **"Migration Pipeline for Base44 Codebases"**.
-* **Rule 2 (No Visual Branding Mimicry)**: The utility's dashboard UI must not copy the color scheme, layout, or graphics of the Base44 dashboard. It must use its own distinct visual language (e.g., the designed dark glassmorphic UI).
+* **Rule 1 (Descriptive Naming)**: The utility must not be named "Standalone Converter" or "Standalone React Utility." It must be named descriptively, highlighting the independent nature of the tool: e.g., **"Standalone React Converter for Standalone Applications"** or **"Migration Pipeline for Standalone Codebases"**.
+* **Rule 2 (No Visual Branding Mimicry)**: The utility's dashboard UI must not copy the color scheme, layout, or graphics of the Standalone dashboard. It must use its own distinct visual language (e.g., the designed dark glassmorphic UI).
 * **Rule 3 (Trademark Footnote)**: A clear trademark attribution notice must appear on the UI:
-  > *"Base44 is a registered trademark of Base44, Inc. This utility is an independent software tool and is not affiliated with, sponsored by, or endorsed by Base44, Inc."*
+  > *"Standalone is a registered trademark of Standalone, Inc. This utility is an independent software tool and is not affiliated with, sponsored by, or endorsed by Standalone, Inc."*
 
 ---
 
@@ -162,16 +162,16 @@ By executing this utility, you acknowledge and agree to the terms, limitations, 
 ---
 
 ### 2. INTELLECTUAL PROPERTY & COMPLIANCE
-* **Code Ownership**: You warrant that you are the legal owner of, or have obtained all necessary licenses and rights to, the codebase and assets associated with the Base44 project being migrated. You must not use this tool to retrieve or convert codebases belonging to third parties without their express authorization.
-* **Proprietary Software Boundaries**: This utility only extracts user-configured logic, JSON configurations, assets, and structural component layouts. It does not download, copy, distribute, or clone Base44’s proprietary runtime engines, closed-source hosting components, or server-side libraries.
-* **Trademark Attribution**: "Base44" is a trademark of Base44, Inc. This utility is an independent, open-source project. It is **not** affiliated with, authorized, sponsored, or endorsed by Base44, Inc.
+* **Code Ownership**: You warrant that you are the legal owner of, or have obtained all necessary licenses and rights to, the codebase and assets associated with the Standalone project being migrated. You must not use this tool to retrieve or convert codebases belonging to third parties without their express authorization.
+* **Proprietary Software Boundaries**: This utility only extracts user-configured logic, JSON configurations, assets, and structural component layouts. It does not download, copy, distribute, or clone Standalone’s proprietary runtime engines, closed-source hosting components, or server-side libraries.
+* **Trademark Attribution**: "Standalone" is a trademark of Standalone, Inc. This utility is an independent, open-source project. It is **not** affiliated with, authorized, sponsored, or endorsed by Standalone, Inc.
 
 ---
 
 ### 3. TERMS OF SERVICE & ACCOUNT STATUS WARNING
 
 > [!WARNING]
-> **Use of this utility may violate the Terms of Service (ToS) or End User License Agreement (EULA) of the source platform (Base44).**
+> **Use of this utility may violate the Terms of Service (ToS) or End User License Agreement (EULA) of the source platform (Standalone).**
 > Many platforms prohibit programmatic scraping, automated downloading, or exporting of hosted codebases. By running this utility, you accept the sole risk that your account may be flagged, suspended, or terminated by the source platform.
 
 The developers of this utility are not responsible for:
@@ -202,5 +202,5 @@ To ensure the codebase migration utility conforms to the legal boundaries descri
 
 1. **Verify Cleanser Exclusions**: Use the recipe-driven `decouple-cleanse.py` engine to ensure it permanently deletes all proprietary runtime files via external configuration recipes, leaving no proprietary source code in the migrated repository.
 2. **Implement User Consent Prompt**: Modify `index.html` (the Dashboard UI) and the command-line entry script to require users to click "I AGREE" to this Legal Disclaimer before saving credentials or launching the scraping sequence.
-3. **Apply Brand Compliance**: Update the repository README and UI headers to replace occurrences of "Base44 Converter" with "Standalone React Converter for Base44 Projects", and add the trademark footnote.
+3. **Apply Brand Compliance**: Update the repository README and UI headers to replace occurrences of "Standalone Converter" with "Standalone React Converter for Standalone Projects", and add the trademark footnote.
 4. **Audit Session Data Logging**: Ensure no debug statements write passwords or session tokens to standard logs or console outputs.

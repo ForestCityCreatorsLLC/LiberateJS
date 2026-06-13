@@ -536,9 +536,9 @@ function addImportsIfMissing(code: string, importLine: string, checkPath: string
 
 function rewriteDBAndAuth(code: string, recipe: any, nextJS: boolean): string {
   const astRules = (recipe && recipe.ast_rules) || {};
-  const dbWrapper = astRules.db_wrapper || "Base44DB";
-  const authWrapper = astRules.auth_wrapper || "Base44Auth";
-  const authHook = astRules.auth_hook || "useBase44User";
+  const dbWrapper = astRules.db_wrapper || "StandaloneDB";
+  const authWrapper = astRules.auth_wrapper || "StandaloneAuth";
+  const authHook = astRules.auth_hook || "useStandaloneUser";
 
   const dbReplacementImport = astRules.db_replacement_import || "import { prisma } from '@/lib/prisma';";
   const dbReplacementPath = astRules.db_replacement_path || "@/lib/prisma";
@@ -746,10 +746,10 @@ model User {
 
 function processContent(content: string, recipe: any, nextJS: boolean): string {
   const astRules = (recipe && recipe.ast_rules) || {};
-  const wrapperNames = astRules.wrappers || ["StandaloneWrapper", "Base44Wrapper"];
-  const authWrapper = astRules.auth_wrapper || "Base44Auth";
-  const authHook = astRules.auth_hook || "useBase44User";
-  const dbWrapper = astRules.db_wrapper || "Base44DB";
+  const wrapperNames = astRules.wrappers || ["StandaloneWrapper", "StandaloneWrapper"];
+  const authWrapper = astRules.auth_wrapper || "StandaloneAuth";
+  const authHook = astRules.auth_hook || "useStandaloneUser";
+  const dbWrapper = astRules.db_wrapper || "StandaloneDB";
 
   let processed = stripJSX(content, wrapperNames);
   processed = cleanImports(processed, [...wrapperNames, authWrapper, authHook, dbWrapper]);
@@ -775,8 +775,8 @@ export function runRewriter(paths: string[], options: {
       throw new Error(`Failed to load recipe from ${options.recipePath}: ${err.message}`);
     }
   } else {
-    // Try base44 default fallback
-    const defaultRecipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
+    // Try standalone default fallback
+    const defaultRecipePath = path.join(__dirname, '..', 'recipes', 'standalone.json');
     if (fs.existsSync(defaultRecipePath)) {
       try {
         const recipeContent = fs.readFileSync(defaultRecipePath, 'utf8');
@@ -785,7 +785,7 @@ export function runRewriter(paths: string[], options: {
     }
   }
 
-  let targets = ["StandaloneWrapper", "Base44Wrapper"];
+  let targets = ["StandaloneWrapper", "StandaloneWrapper"];
   if (recipe && recipe.ast_rules && recipe.ast_rules.wrappers) {
     targets = recipe.ast_rules.wrappers;
   }
@@ -795,12 +795,12 @@ export function runRewriter(paths: string[], options: {
 
   if (!recipe) {
     recipe = {
-      name: "base44",
+      name: "standalone",
       ast_rules: {
         wrappers: targets,
-        db_wrapper: "Base44DB",
-        auth_wrapper: "Base44Auth",
-        auth_hook: "useBase44User"
+        db_wrapper: "StandaloneDB",
+        auth_wrapper: "StandaloneAuth",
+        auth_hook: "useStandaloneUser"
       }
     };
   }

@@ -26,12 +26,12 @@ function log(msg: string, level: string = "INFO") {
 function loadRecipe(recipePath: string | null) {
   if (!recipePath) {
     // Default fallback path relative to compiled dist output location (dist/cleanser.js)
-    const defaultPath = path.join(__dirname, "..", "recipes", "base44.json");
+    const defaultPath = path.join(__dirname, "..", "recipes", "standalone.json");
     if (fs.existsSync(defaultPath)) {
       recipePath = defaultPath;
     } else {
-      log("No recipe specified and default base44.json not found.", "ERROR");
-      throw new Error("No recipe specified and default base44.json not found.");
+      log("No recipe specified and default standalone.json not found.", "ERROR");
+      throw new Error("No recipe specified and default standalone.json not found.");
     }
   }
 
@@ -437,7 +437,7 @@ function cleanseHtml(projectDir: string, dryRun: boolean, metadataSummary: any, 
   try {
     let content = fs.readFileSync(htmlPath, "utf8");
     let modified = false;
-    const replaceTerms = recipe.replace_terms || [{ pattern: "base44", replacement: "standalone" }];
+    const replaceTerms = recipe.replace_terms || [{ pattern: "standalone", replacement: "standalone" }];
 
     const titleMatch = content.match(/<title>(.*?)<\/title>/i);
     if (titleMatch) {
@@ -495,11 +495,11 @@ function cleanseHtml(projectDir: string, dryRun: boolean, metadataSummary: any, 
 
 function deepSearchAndReplace(projectDir: string, dryRun: boolean, metadataSummary: any, recipe: any) {
   const recipeName = recipe.name || "decouple";
-  const replaceTerms = recipe.replace_terms || [{ pattern: "base44", replacement: "standalone" }];
+  const replaceTerms = recipe.replace_terms || [{ pattern: "standalone", replacement: "standalone" }];
   log(`Starting global search-and-replace using recipe: ${recipeName}...`, "INFO");
 
   const excludeDirs = new Set([".git", "node_modules", "dist", "build", ".next", ".cache", ".idea", ".vscode"]);
-  const excludeFiles = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "decouple-cleanse.py", "decouple-cleanse.js", "base44-cleanse.py", ".migration-status.json"]);
+  const excludeFiles = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "decouple-cleanse.py", "decouple-cleanse.js", "standalone-cleanse.py", ".migration-status.json"]);
 
   const rules = replaceTerms.map((term: any) => {
     return {
@@ -940,7 +940,7 @@ function scaffoldStylingAndOptimization(projectDir: string, dryRun: boolean, met
 function applyRoutingConfigurations(projectDir: string, routes: Record<string, string>, dryRun: boolean, metadataSummary: any) {
   log("Applying routing configurations...", "INFO");
   const excludeDirs = new Set([".git", "node_modules", "dist", "build", ".next", ".cache", ".idea", ".vscode"]);
-  const excludeFiles = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "decouple-cleanse.py", "decouple-cleanse.js", "base44-cleanse.py", ".migration-status.json", "liberatejs.config.json"]);
+  const excludeFiles = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "decouple-cleanse.py", "decouple-cleanse.js", "standalone-cleanse.py", ".migration-status.json", "liberatejs.config.json"]);
 
   let count = 0;
   let fileCount = 0;

@@ -562,7 +562,7 @@ const server = http.createServer((req, res) => {
       
       let cleanseHandled = false;
       try {
-        const recipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
+        const recipePath = path.join(__dirname, '..', 'recipes', 'standalone.json');
         cleanseProc = spawn('node', [cliPath, '--src', targetDir, '--rename', repoName, '--recipe', recipePath, '--stage', 'cleanse']);
       } catch (err) {
         cleanseHandled = true;
@@ -642,7 +642,7 @@ const server = http.createServer((req, res) => {
         sendLog('Step 3: Rewiring router layouts and state adapters using AST rewriter...', 'info');
         setTimeout(() => {
           const cliPath = path.join(__dirname, '..', 'dist', 'cli.js');
-          const recipePath = path.join(__dirname, '..', 'recipes', 'base44.json');
+          const recipePath = path.join(__dirname, '..', 'recipes', 'standalone.json');
           sendLog(`Running AST rewriter: node "${cliPath}" --src "${targetDir}" --recipe "${recipePath}" --stage rewrite`, 'info');
           
           try {

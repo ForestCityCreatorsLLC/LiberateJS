@@ -6,19 +6,19 @@ This document outlines 10 production-ready upgrades and features designed to ele
 
 ### 1. Database Migration Wrappers (Database & ORM Adaption Layer)
 * **Area of Focus**: Database migration wrappers
-* **Description**: Legacy Base44 projects commonly use a proprietary, serverless data persistence library (e.g., `Base44DB`). This upgrade introduces an automated database schema introspection and adapter layer.
+* **Description**: Legacy Standalone projects commonly use a proprietary, serverless data persistence library (e.g., `StandaloneDB`). This upgrade introduces an automated database schema introspection and adapter layer.
 * **Key Features**:
-  * **AST DB Parsing**: Scans source files to identify queries referencing legacy Base44 database methods (e.g., `.find()`, `.insert()`).
+  * **AST DB Parsing**: Scans source files to identify queries referencing legacy Standalone database methods (e.g., `.find()`, `.insert()`).
   * **ORM Target Generation**: Automatically translates legacy queries into standard [Prisma ORM](https://www.prisma.io/) or [Drizzle ORM](https://orm.drizzle.team/) schemas.
   * **Migration & Seed Generation**: Automatically generates SQL migration scripts (e.g., PostgreSQL/MySQL) or MongoDB schemas, along with initial data seeds parsed from local mock-database JSON files.
 
 ### 2. Universal Auth Adapters (Identity Provider Bridge)
 * **Area of Focus**: Auth adapters
-* **Description**: Base44 applications usually rely on proprietary login/session wrappers (e.g., `<Base44Auth>` or `useBase44User()`). This upgrade replaces them with standard, secure identity providers.
+* **Description**: Standalone applications usually rely on proprietary login/session wrappers (e.g., `<StandaloneAuth>` or `useStandaloneUser()`). This upgrade replaces them with standard, secure identity providers.
 * **Key Features**:
   * **Auth Provider Mapping**: Replaces the custom wrapper with standard context providers like [NextAuth.js (Auth.js)](https://authjs.dev/), [Supabase Auth](https://supabase.com/docs/guides/auth), or [Firebase Auth](https://firebase.google.com/docs/auth).
   * **Config & Middleware Scaffolding**: Generates production-ready client config hooks, route guards (middleware), and token/session verification wrappers.
-  * **Schema Adaptation**: Automatically maps custom session properties (e.g., `user.base44_role`) to standard OIDC/JWT user profiles.
+  * **Schema Adaptation**: Automatically maps custom session properties (e.g., `user.standalone_role`) to standard OIDC/JWT user profiles.
 
 ### 3. Production-Grade Structured Logging Framework
 * **Area of Focus**: Logging frameworks
@@ -33,8 +33,8 @@ This document outlines 10 production-ready upgrades and features designed to ele
 * **Description**: Upgrades the cleanser from string replacement and regex searches to a formal Abstract Syntax Tree (AST) validator to eliminate lint/compilation errors.
 * **Key Features**:
   * **Babel/ESTree Parser**: Parses the entire JavaScript/TypeScript codebase into AST nodes to identify all occurrences of proprietary namespaces.
-  * **Type & Signature Validation**: Ensures that variables previously injected by the Base44 runtime are declared, and that all import declarations resolve cleanly to standard packages.
-  * **Unused Code Detection**: Identifies dead code paths or orphaned modules caused by stripping Base44 libraries, cleaning imports dynamically.
+  * **Type & Signature Validation**: Ensures that variables previously injected by the Standalone runtime are declared, and that all import declarations resolve cleanly to standard packages.
+  * **Unused Code Detection**: Identifies dead code paths or orphaned modules caused by stripping Standalone libraries, cleaning imports dynamically.
 
 ### 5. Automated E2E Setup Tests & Regression Suite
 * **Area of Focus**: Setup tests
@@ -58,14 +58,14 @@ This document outlines 10 production-ready upgrades and features designed to ele
 * **Key Features**:
   * **Theme Extraction**: Parses the legacy design specifications and transforms them into standard `tailwind.config.js` or clean CSS custom properties.
   * **Premium Fonts & Layouts**: Configures modern Google Fonts (e.g., Inter, Outfit) and injects global styles for glassmorphism, responsive grid layouts, and sleek dark modes.
-  * **Component Adaptability**: Automatically maps Base44 UI components to native elements styled with standard utility classes.
+  * **Component Adaptability**: Automatically maps Standalone UI components to native elements styled with standard utility classes.
 
 ### 8. Transactional Dry-Run & Git Rollback Engine
 * **Area of Focus**: Reliability & Version Control
 * **Description**: Ensures that migration failures do not leave files in a corrupt or half-migrated state.
 * **Key Features**:
   * **Virtual File System dry-run**: Simulates migration steps in memory or in a temporary workspace directory before writing to disk.
-  * **Transactional Git Rollback**: Initializes a migration branch (e.g., `migration/base44-cleanup`) and commits incrementally. If validation or builds fail, it auto-aborts and rolls back changes via `git reset --hard`.
+  * **Transactional Git Rollback**: Initializes a migration branch (e.g., `migration/standalone-cleanup`) and commits incrementally. If validation or builds fail, it auto-aborts and rolls back changes via `git reset --hard`.
 
 ### 9. Interactive Migration Dashboard UI with Real-time Diff Visualizer
 * **Area of Focus**: User Experience
@@ -80,4 +80,4 @@ This document outlines 10 production-ready upgrades and features designed to ele
 * **Description**: Allows enterprise users to define their target standalone framework profiles rather than forcing a single architecture.
 * **Key Features**:
   * **Target Profiles**: Supports profiles like `vite-react-spa`, `nextjs-app-router`, or `express-api-service`.
-  * **Configuration Schema (`base44-migrate.config.json`)**: Lets users specify package managers (`pnpm`, `npm`, `yarn`), UI libraries (`shadcn`, `mui`), and deployment environments (`vercel`, `docker`).
+  * **Configuration Schema (`standalone-migrate.config.json`)**: Lets users specify package managers (`pnpm`, `npm`, `yarn`), UI libraries (`shadcn`, `mui`), and deployment environments (`vercel`, `docker`).

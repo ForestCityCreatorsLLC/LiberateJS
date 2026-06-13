@@ -1,24 +1,24 @@
 {
-  "name": "base44",
+  "name": "standalone",
   "delete_paths": [
-    "base44",
-    "node_modules/@base44",
-    "eject_base44.py",
+    "standalone",
+    "node_modules/@standalone",
+    "eject_standalone.py",
     "fetch_data.py",
     "src/lib/app-params.js"
   ],
-  "dependencies_to_remove": ["base44"],
-  "scripts_to_remove": ["base44"],
+  "dependencies_to_remove": ["standalone"],
+  "scripts_to_remove": ["standalone"],
   "replace_terms": [
-    { "pattern": "base44", "replacement": "standalone" }
+    { "pattern": "standalone", "replacement": "standalone" }
   ],
   "ast_rules": {
-    "wrappers": ["StandaloneWrapper", "Base44Wrapper"],
-    "db_wrapper": "Base44DB",
+    "wrappers": ["StandaloneWrapper", "StandaloneWrapper"],
+    "db_wrapper": "StandaloneDB",
     "db_replacement_import": "import { prisma } from '@/lib/prisma';",
     "db_replacement_path": "@/lib/prisma",
-    "auth_wrapper": "Base44Auth",
-    "auth_hook": "useBase44User",
+    "auth_wrapper": "StandaloneAuth",
+    "auth_hook": "useStandaloneUser",
     "auth_replacement_nextjs": {
       "wrapper": "SessionProvider",
       "hook": "useSession",
