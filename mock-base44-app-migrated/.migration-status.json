@@ -1,0 +1,16 @@
+{
+  "migration_timestamp": "2026-06-13T16:25:04.896Z",
+  "original_project_name": "my-app-dashboard",
+  "new_project_name": "my-app-dashboard",
+  "detected_framework": "vite",
+  "deleted_files_and_directories": [],
+  "modified_files": [
+    "src\\components\\MyLegacyView.jsx"
+  ],
+  "removed_dependencies": [],
+  "removed_scripts": [],
+  "extracted_env_vars": [],
+  "routes_configured": {
+    "legacy-view": "modernized-view"
+  }
+}

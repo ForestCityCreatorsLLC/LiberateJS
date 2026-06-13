@@ -1,5 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function isWordChar(char: string | undefined): boolean {
   return !!(char && /[a-zA-Z0-9_$]/.test(char));
@@ -768,7 +772,7 @@ export function runRewriter(paths: string[], options: {
       recipe = JSON.parse(recipeContent);
     } catch (err: any) {
       console.error(`Failed to load recipe from ${options.recipePath}: ${err.message}`);
-      process.exit(1);
+      throw new Error(`Failed to load recipe from ${options.recipePath}: ${err.message}`);
     }
   } else {
     // Try base44 default fallback

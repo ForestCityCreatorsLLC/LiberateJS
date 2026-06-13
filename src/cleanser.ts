@@ -31,7 +31,7 @@ function loadRecipe(recipePath: string | null) {
       recipePath = defaultPath;
     } else {
       log("No recipe specified and default base44.json not found.", "ERROR");
-      process.exit(1);
+      throw new Error("No recipe specified and default base44.json not found.");
     }
   }
 
@@ -42,7 +42,7 @@ function loadRecipe(recipePath: string | null) {
     return recipe;
   } catch (err: any) {
     log(`Failed to load recipe from ${recipePath}: ${err.message}`, "ERROR");
-    process.exit(1);
+    throw new Error(`Failed to load recipe from ${recipePath}: ${err.message}`);
   }
 }
 
@@ -208,13 +208,16 @@ function writeFrameworkConfig(projectDir: string, framework: string, dryRun: boo
   }
 }
 
-function runPreflightChecks(projectDir: string) {
+function runPreflightChecks(projectDir: string, configFramework?: string, configPkgMgr?: string) {
   log("Running Active Pre-Flight Codebase Checks...", "INFO");
   let passed = true;
 
   // 1. Verify system dependencies
   log("Checking system environment dependencies...", "INFO");
   const tools = ["git", "node", "npm"];
+  if (configPkgMgr && !tools.includes(configPkgMgr)) {
+    tools.push(configPkgMgr);
+  }
   for (const tool of tools) {
     const cmd = process.platform === "win32" ? `where ${tool}` : `which ${tool}`;
     try {
@@ -275,8 +278,10 @@ function runPreflightChecks(projectDir: string) {
   }
 
   // 5. Framework detection
-  const framework = detectFramework(projectDir);
-  if (framework === "nextjs") {
+  const framework = configFramework || detectFramework(projectDir);
+  if (configFramework) {
+    log(`  [OK] Using target framework '${framework}' from configuration.`, "SUCCESS");
+  } else if (framework === "nextjs") {
     log(`  [OK] Detected Next.js framework.`, "SUCCESS");
   } else if (framework === "vite") {
     log(`  [OK] Detected Vite React framework.`, "SUCCESS");
@@ -286,7 +291,7 @@ function runPreflightChecks(projectDir: string) {
 
   if (!passed) {
     log("Pre-flight validation failed. Aborting conversion to protect codebase.", "ERROR");
-    process.exit(1);
+    throw new Error("Pre-flight validation failed. Aborting conversion to protect codebase.");
   }
 
   log("All Pre-Flight codebase diagnostics passed successfully!", "SUCCESS");
@@ -932,14 +937,90 @@ function scaffoldStylingAndOptimization(projectDir: string, dryRun: boolean, met
   }
 }
 
-function runNpmInstall(projectDir: string, dryRun: boolean) {
+function applyRoutingConfigurations(projectDir: string, routes: Record<string, string>, dryRun: boolean, metadataSummary: any) {
+  log("Applying routing configurations...", "INFO");
+  const excludeDirs = new Set([".git", "node_modules", "dist", "build", ".next", ".cache", ".idea", ".vscode"]);
+  const excludeFiles = new Set(["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "decouple-cleanse.py", "decouple-cleanse.js", "base44-cleanse.py", ".migration-status.json", "liberatejs.config.json"]);
+
+  let count = 0;
+  let fileCount = 0;
+
+  function walkAndReplace(dir: string) {
+    const list = fs.readdirSync(dir);
+    for (const file of list) {
+      if (excludeFiles.has(file)) continue;
+
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        if (!excludeDirs.has(file)) {
+          walkAndReplace(fullPath);
+        }
+      } else {
+        try {
+          const buffer = fs.readFileSync(fullPath);
+          let isBinary = false;
+          for (let b = 0; b < Math.min(buffer.length, 1024); b++) {
+            if (buffer[b] === 0) {
+              isBinary = true;
+              break;
+            }
+          }
+          if (isBinary) continue;
+
+          let content = buffer.toString("utf8");
+          let hasMatch = false;
+          let newContent = content;
+
+          for (const [oldRoute, newRoute] of Object.entries(routes)) {
+            const escapedOldRoute = oldRoute.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const regex = new RegExp(escapedOldRoute, 'g');
+            if (regex.test(newContent)) {
+              const matches = (newContent.match(regex) || []).length;
+              count += matches;
+              newContent = newContent.replace(regex, newRoute);
+              hasMatch = true;
+            }
+          }
+
+          if (hasMatch) {
+            fileCount++;
+            const relPath = path.relative(projectDir, fullPath);
+            if (dryRun) {
+              log(`Would rewrite routing configurations in: ${relPath}`, "INFO");
+            } else {
+              fs.writeFileSync(fullPath, newContent, "utf8");
+              if (metadataSummary && !metadataSummary.modified_files.includes(relPath)) {
+                metadataSummary.modified_files.push(relPath);
+              }
+              log(`Rewrote routing configurations in: ${relPath}`, "SUCCESS");
+            }
+          }
+        } catch (err) {}
+      }
+    }
+  }
+
+  try {
+    walkAndReplace(projectDir);
+  } catch (err: any) {
+    log(`Error during routing configuration replacement: ${err.message}`, "ERROR");
+  }
+
+  log(`Routing configurations applied. Total occurrences replaced: ${count} across ${fileCount} files.`, "SUCCESS");
+}
+
+function runNpmInstall(projectDir: string, dryRun: boolean, configPkgMgr?: string) {
   if (dryRun) {
     log("Would run package installation (npm/yarn/pnpm install)", "INFO");
     return;
   }
 
   let pkgMgr = "npm";
-  if (fs.existsSync(path.join(projectDir, "pnpm-lock.yaml"))) {
+  if (configPkgMgr && ["npm", "pnpm", "yarn"].includes(configPkgMgr)) {
+    pkgMgr = configPkgMgr;
+  } else if (fs.existsSync(path.join(projectDir, "pnpm-lock.yaml"))) {
     pkgMgr = "pnpm";
   } else if (fs.existsSync(path.join(projectDir, "yarn.lock"))) {
     pkgMgr = "yarn";
@@ -951,6 +1032,7 @@ function runNpmInstall(projectDir: string, dryRun: boolean) {
     log("Dependencies successfully reinstalled.", "SUCCESS");
   } catch (err: any) {
     log(`Package installation failed: ${err.message}`, "ERROR");
+    throw new Error(`Package installation failed: ${err.message}`);
   }
 }
 
@@ -965,12 +1047,25 @@ export function runCleanser(options: {
   const recipe = loadRecipe(options.recipe);
   const recipeName = recipe.name || "decouple";
 
+  // Load configuration profile from liberatejs.config.json in the target directory
+  const configPath = path.join(targetDir, "liberatejs.config.json");
+  let config: any = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      log(`Loaded LiberateJS configuration from ${configPath}`, "SUCCESS");
+    } catch (err: any) {
+      log(`Failed to load LiberateJS configuration: ${err.message}`, "WARNING");
+    }
+  }
+
   log(`Starting ${recipeName} cleanup in: ${targetDir}`);
   if (options.dryRun) {
     log("DRY RUN MODE ENABLED - No changes will be saved", "WARNING");
   }
 
-  runPreflightChecks(targetDir);
+  const configFramework = config.framework || config.targetFramework;
+  runPreflightChecks(targetDir, configFramework, config.packageManager);
 
   const localMetadata = options.metadataSummary || {
     migration_timestamp: new Date().toISOString(),
@@ -983,6 +1078,10 @@ export function runCleanser(options: {
     removed_scripts: [],
     extracted_env_vars: []
   };
+
+  if (config.routes) {
+    localMetadata.routes_configured = config.routes;
+  }
 
   extractEnvVariables(targetDir, localMetadata, recipe);
 
@@ -1021,8 +1120,13 @@ export function runCleanser(options: {
   log("Step 4: Running global case-preserving replacement...", "INFO");
   deepSearchAndReplace(targetDir, options.dryRun, localMetadata, recipe);
 
+  if (config.routes) {
+    log("Step 4.1: Applying configuration profile routing configurations...", "INFO");
+    applyRoutingConfigurations(targetDir, config.routes, options.dryRun, localMetadata);
+  }
+
   log("Step 4.5: Writing framework configuration file...", "INFO");
-  const framework = detectFramework(targetDir);
+  const framework = configFramework || detectFramework(targetDir);
   localMetadata.detected_framework = framework;
   writeFrameworkConfig(targetDir, framework, options.dryRun, localMetadata);
 
@@ -1043,7 +1147,7 @@ export function runCleanser(options: {
   }
 
   log("Step 5: Re-installing dependencies...", "INFO");
-  runNpmInstall(targetDir, options.dryRun);
+  runNpmInstall(targetDir, options.dryRun, config.packageManager);
 
   log(`${recipeName.toUpperCase()} Decoupling CLI phase complete. Standalone project is ready for AI re-wiring and enhancement!`, "SUCCESS");
   

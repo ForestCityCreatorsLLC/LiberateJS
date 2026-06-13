@@ -1,0 +1,7 @@
+{
+  "packageManager": "npm",
+  "framework": "vite",
+  "routes": {
+    "legacy-view": "modernized-view"
+  }
+}
