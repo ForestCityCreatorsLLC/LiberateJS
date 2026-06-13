@@ -74,7 +74,7 @@ export async function coordinatePipeline(options: CoordinatorOptions): Promise<v
         execSync('git add -A', { cwd: resolvedDir, stdio: 'ignore' });
         const status = execSync('git status --porcelain', { cwd: resolvedDir }).toString().trim();
         if (status) {
-          execSync('git commit -m "liberatejs: cleanse stage complete"', { cwd: resolvedDir, stdio: 'ignore' });
+          execSync('git commit --allow-empty -m "liberatejs: cleanse stage complete"', { cwd: resolvedDir, stdio: 'ignore' });
           console.log('[COORDINATOR] Cleanser changes committed successfully.');
         } else {
           console.log('[COORDINATOR] No changes to commit for Cleanser stage.');
@@ -100,7 +100,7 @@ export async function coordinatePipeline(options: CoordinatorOptions): Promise<v
         execSync('git add -A', { cwd: resolvedDir, stdio: 'ignore' });
         const status = execSync('git status --porcelain', { cwd: resolvedDir }).toString().trim();
         if (status) {
-          execSync('git commit -m "liberatejs: rewrite stage complete"', { cwd: resolvedDir, stdio: 'ignore' });
+          execSync('git commit --allow-empty -m "liberatejs: rewrite stage complete"', { cwd: resolvedDir, stdio: 'ignore' });
           console.log('[COORDINATOR] Rewriter changes committed successfully.');
         } else {
           console.log('[COORDINATOR] No changes to commit for Rewriter stage.');
@@ -127,6 +127,9 @@ export async function coordinatePipeline(options: CoordinatorOptions): Promise<v
   } catch (error: any) {
     if (isGit && !options.dryRun) {
       console.error(`\n[COORDINATOR] Error occurred during pipeline execution: ${error.message}`);
+      if (error.stderr) {
+        console.error(`[COORDINATOR] Git Stderr: ${error.stderr.toString()}`);
+      }
       console.log(`[COORDINATOR] Reverting changes via 'git reset --hard' and returning to original branch/commit '${originalBranchOrCommit}'...`);
       try {
         execSync('git reset --hard', { cwd: resolvedDir, stdio: 'ignore' });
