@@ -53,7 +53,22 @@ function getGhToken(targetDir) {
   return null;
 }
 
+function isDummyToken(token) {
+  return token && (
+    token.startsWith('ghp_1234567890') || 
+    token === 'ghp_123456789012345678901234567890123456' || 
+    token.startsWith('ghp_dummy') || 
+    process.env.MOCK_GITHUB === 'true'
+  );
+}
+
 function getGitHubUser(token, callback) {
+  if (isDummyToken(token)) {
+    setTimeout(() => {
+      callback(null, { login: 'mock-user', name: 'Mock User', email: 'mock@users.noreply.github.com' });
+    }, 100);
+    return;
+  }
   const options = {
     hostname: 'api.github.com',
     path: '/user',
@@ -92,6 +107,12 @@ function getGitHubUser(token, callback) {
 }
 
 function createGitHubRepo(token, repoName, callback) {
+  if (isDummyToken(token)) {
+    setTimeout(() => {
+      callback(null, { clone_url: `https://github.com/mock-user/${repoName}.git`, html_url: `https://github.com/mock-user/${repoName}`, alreadyExists: false });
+    }, 100);
+    return;
+  }
   const data = JSON.stringify({
     name: repoName,
     private: false,
@@ -918,8 +939,13 @@ const server = http.createServer((req, res) => {
                       sendLog('Added GitHub remote origin.', 'info');
                       
                       sendLog('Pushing codebase to GitHub main branch...', 'info');
-                      execSync('git push -u origin main', { cwd: targetDir });
-                      sendLog('Pushed code successfully to remote origin/main.', 'success');
+                      if (isDummyToken(token)) {
+                        sendLog('[MOCK] Pushing to mock GitHub remote (dummy token detected)...', 'info');
+                        sendLog('[MOCK] Pushed code successfully to remote origin/main.', 'success');
+                      } else {
+                        execSync('git push -u origin main', { cwd: targetDir });
+                        sendLog('Pushed code successfully to remote origin/main.', 'success');
+                      }
 
                       // Clean up credentials from remote URL to avoid leaving token in local git config
                       try {
