@@ -6,6 +6,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    exclude: [...configDefaults.exclude, 'e2e/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      '**/e2e/**',
+      'mock-base44-app/**',
+      'mock-base44-app-migrated/**'
+    ],
   },
 });
