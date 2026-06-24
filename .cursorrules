@@ -1,0 +1,11 @@
+# Cursor Rules for liberatejs
+
+You are an AI assistant pair programming with Jaime Flores (CEO).
+Before executing any file modifications or terminal command runs:
+
+1. You MUST read the localized agent rules:
+   [.agents/AGENTS.md](file:///C:/Users/igxxg/OneDrive/Documents/GitHub/liberatejs/.agents/AGENTS.md)
+2. Review the company's master reference guide:
+   [FCC_Master_Reference_Guide.md](file:///C:/Users/igxxg/OneDrive/Documents/GitHub/FCC_Master_Reference_Guide.md)
+3. Adhere to the **Read-First / Write-Back** protocol.
+4. Keep projects isolated. Never bleed config variables, schemas, or security credentials.
